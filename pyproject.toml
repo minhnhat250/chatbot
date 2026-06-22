@@ -4,7 +4,7 @@ version = "1.1.0"
 description = "Kiến trúc chatbot"
 readme = "README.md"
 requires-python = ">=3.11"
-license = {text = "MIT"}
+license = "MIT"
 authors = [
     {name = "Minh Nhat"}
 ]
@@ -18,5 +18,8 @@ dependencies = [
     "uvicorn",
     "qdrant-client"
 ]
+
+[tool.setuptools.packages.find]
+include = ["models*", "Tools*"]
 
 

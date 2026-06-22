@@ -1,0 +1,19 @@
+Metadata-Version: 2.4
+Name: LLM-gateway
+Version: 1.1.0
+Summary: Kiến trúc chatbot
+Author: Minh Nhat
+License-Expression: MIT
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: cohere
+Requires-Dist: fastapi
+Requires-Dist: google-generativeai
+Requires-Dist: openai
+Requires-Dist: python-dotenv
+Requires-Dist: uvicorn
+Requires-Dist: qdrant-client
+
+# LLM-gateway
+
+Kiến trúc chatbot
