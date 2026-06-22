@@ -1,0 +1,22 @@
+[project]
+name =  "LLM-gateway"
+version = "1.1.0"
+description = "Kiến trúc chatbot"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [
+    {name = "Minh Nhat"}
+]
+
+dependencies = [
+    "cohere",
+    "fastapi",
+    "google-generativeai",
+    "openai",
+    "python-dotenv",
+    "uvicorn",
+    "qdrant-client"
+]
+
+
