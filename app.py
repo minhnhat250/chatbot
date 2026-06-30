@@ -15,5 +15,5 @@ app = FastAPI()
 deepseek = Deepseek()
 
 class CheckPrompt(BaseModel):
-    promt: str
+    prompt: str
 

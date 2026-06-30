@@ -1,6 +1,4 @@
-from time import asctime
-from logging import INFO
-import os 
+import os
 import logging
 from dotenv import load_dotenv
 from openai import AsyncOpenAI
@@ -10,7 +8,7 @@ logger = logging.getLogger(__name__)
 #Logging sẽ có các mức: debug, info, warning, error
 
 logging.basicConfig(
-    level= INFO,
+    level= logging.INFO,
     format= "%(asctime)s - %(levelname)s -%(name)s - %(message)s"
 )
 load_env = os.path.join(os.path.dirname(__file__),'..','.env')
@@ -19,7 +17,7 @@ load_dotenv(load_env)
 #Để kết nối được với deepseek API, ta cần: API_kEY, Base_URL, Model_name
 class Deepseek:
     
-    def __init__(self, api_key, base_url,model_name ):
+    def __init__(self, api_key: Optional[str] = None, base_url: Optional[str] = None, model_name: Optional[str] = None):
         self.api_key = os.getenv("DEEPSEEK_API")
         if not self.api_key:
             logger.error("API không tồn tại. Vui lòng kiểm tra")
@@ -38,7 +36,7 @@ class Deepseek:
         else:
             logger.info("Kết nối Model name thành công")
 
-        model = AsyncOpenAI(
+        self.model = AsyncOpenAI(
             api_key = self.api_key,
             base_url = self.base_url
            )
@@ -47,8 +45,8 @@ class Deepseek:
         logger.info(f"Đã kết nối model thành công")
 
     async def chat_test(self, prompt: str, max_output_tokens: Optional[int] = None, max_input_tokens: Optional[int] = None) -> str:
-        max_output_tokens = self.Max_OUTPUT_TOKENS
-        max_input_tokens = self.Max_INPUT_TOKENS
+        max_output_tokens = max_output_tokens or self.Max_OUTPUT_TOKENS
+        max_input_tokens = max_input_tokens or self.Max_INPUT_TOKENS
         try:
             response = await self.model.chat.completions.create(
                 model = self.model_name,
@@ -61,11 +59,11 @@ class Deepseek:
                     }
                 ],
                 extra_body = {
-                    "thingking":{
+                    "thinking":{
                         "type": "enabled"
                     }
                 },
-                reasoning_effor = "high"
+                reasoning_effort = "high"
             )
             content = response.choices[0].message.content
             logger.info("Model trả về kết quả thành công")
