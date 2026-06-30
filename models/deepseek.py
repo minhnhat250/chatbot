@@ -1,0 +1,77 @@
+from time import asctime
+from logging import INFO
+import os 
+import logging
+from dotenv import load_dotenv
+from openai import AsyncOpenAI
+from typing import List, Optional, Any, Dict
+
+logger = logging.getLogger(__name__)
+#Logging sẽ có các mức: debug, info, warning, error
+
+logging.basicConfig(
+    level= INFO,
+    format= "%(asctime)s - %(levelname)s -%(name)s - %(message)s"
+)
+load_env = os.path.join(os.path.dirname(__file__),'..','.env')
+load_dotenv(load_env)
+
+#Để kết nối được với deepseek API, ta cần: API_kEY, Base_URL, Model_name
+class Deepseek:
+    
+    def __init__(self, api_key, base_url,model_name ):
+        self.api_key = os.getenv("DEEPSEEK_API")
+        if not self.api_key:
+            logger.error("API không tồn tại. Vui lòng kiểm tra")
+        else:
+            logger.info("Kết nối API thành công")
+
+        self.base_url = os.getenv("BASE_URL")
+        if not self.base_url:
+            logger.error("Base URL không tồn tại. Vui lòng kiểm tra")
+        else:
+            logger.info("Kết nối Base URL thành công")
+
+        self.model_name = os.getenv("MODEL_NAME")
+        if not self.model_name:
+            logger.error("Model name không tồn tại. Vui lòng kiểm tra")
+        else:
+            logger.info("Kết nối Model name thành công")
+
+        model = AsyncOpenAI(
+            api_key = self.api_key,
+            base_url = self.base_url
+           )
+        self.Max_OUTPUT_TOKENS = os.getenv("MAX_OUTPUT_TOKENS", 10000)
+        self.Max_INPUT_TOKENS = os.getenv("MAX_INPUT_TOKENS", 100000)
+        logger.info(f"Đã kết nối model thành công")
+
+    async def chat_test(self, prompt: str, max_output_tokens: Optional[int] = None, max_input_tokens: Optional[int] = None) -> str:
+        max_output_tokens = self.Max_OUTPUT_TOKENS
+        max_input_tokens = self.Max_INPUT_TOKENS
+        try:
+            response = await self.model.chat.completions.create(
+                model = self.model_name,
+                max_output_tokens = max_output_tokens,
+                max_input_tokens = max_input_tokens,
+                messages = [
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                extra_body = {
+                    "thingking":{
+                        "type": "enabled"
+                    }
+                },
+                reasoning_effor = "high"
+            )
+            content = response.choices[0].message.content
+            logger.info("Model trả về kết quả thành công")
+            return content
+        except Exception as e:
+            logger.error(f"Đã xảy ra lỗi khi gọi API: {e}")
+            return "Đã xảy ra lỗi khi gọi API. Vui lòng thử lại sau."
+
+        
