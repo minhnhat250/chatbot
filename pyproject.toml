@@ -16,7 +16,8 @@ dependencies = [
     "openai",
     "python-dotenv",
     "uvicorn",
-    "qdrant-client"
+    "qdrant-client",
+    "google-genai>=2.12.1",
 ]
 
 [tool.setuptools.packages.find]
