@@ -1,0 +1,48 @@
+\chapter*{Lời mở đầu}
+\addcontentsline{toc}{chapter}{Lời mở đầu}
+
+Một giao diện có bong bóng tin nhắn chưa chắc đã là một chatbot có trí nhớ. Model ngôn ngữ chỉ
+thấy dữ liệu nằm trong request hiện tại; nếu ứng dụng không gửi lại thông tin cũ, câu hỏi
+``Tôi tên gì?'' không có cách nào liên hệ với câu ``Tôi tên Nhật'' ở request trước. Từ quan sát
+nhỏ này xuất hiện cả một lớp bài toán hệ thống: lưu message ở đâu, phân tách nhiều cuộc trò
+chuyện thế nào, đưa bao nhiêu lịch sử vào context, tóm tắt phần cũ ra sao, và thông tin nào được
+phép sống lâu hơn một thread.
+
+Giáo trình này xây mô hình tinh thần trước rồi mới thêm framework. Học viên bắt đầu bằng một
+danh sách Python thuần, chuyển nó thành state của LangGraph, thêm checkpointer, quan sát hai
+\texttt{thread\_id} độc lập, rồi mới học trimming, running summary và long-term Store. Phần cuối
+ghép các mảnh ấy vào FastAPI và thiết kế API cho một LLM Gateway nhiều provider.
+
+\begin{aidefinition}[Phạm vi]
+Cuốn sách tập trung vào bộ nhớ hội thoại và context engineering. Qdrant, RAG và agent gọi tool
+chỉ được nhắc ở ranh giới cần phân biệt; chúng không phải điều kiện để hoàn thành các lab.
+\end{aidefinition}
+
+\begin{aiintuition}[Nguyên tắc xuyên suốt]
+Model không sở hữu trí nhớ. Ứng dụng sở hữu dữ liệu; LangGraph giúp tổ chức state, checkpoint
+và luồng cập nhật; model chỉ nhận một lát context do ứng dụng lựa chọn ở thời điểm gọi.
+\end{aiintuition}
+
+Mọi ví dụ cốt lõi dùng một ``model quyết định'' bằng quy tắc. Nhờ vậy học viên kiểm tra được
+memory mà không phụ thuộc mạng, API key hay độ ngẫu nhiên của LLM. Khi cơ chế đã đúng, ta thay
+model giả bằng DeepSeek hoặc Gemini mà không đổi invariant của hội thoại.
+
+\section*{Đối tượng và điều kiện đầu vào}
+
+Tài liệu dành cho người đã biết Python cơ bản, dictionary, list, function và cách chạy một ứng
+dụng FastAPI; không giả định đã dùng LangChain hay LangGraph. Python 3.11 trở lên và công cụ
+\texttt{uv} là cấu hình đề xuất. LangGraph hiện yêu cầu Python 3.10 trở lên và được cài độc lập
+với các gói provider \parencite{langgraphInstall}.
+
+\section*{Kết quả đầu ra quan sát được}
+
+Sau khi hoàn thành, học viên có thể:
+\begin{enumerate}
+  \item giải thích vì sao UI history khác model context và persistent history;
+  \item dựng graph \texttt{START -> call\_model -> END};
+  \item dùng checkpointer và \texttt{thread\_id} để tách cuộc trò chuyện;
+  \item chọn trim hoặc summary dựa trên chi phí và yêu cầu giữ thông tin;
+  \item dùng \texttt{user\_id} và Store cho memory xuyên thread;
+  \item thiết kế API chống trộn dữ liệu giữa người dùng;
+  \item viết test chứng minh các invariant trên.
+\end{enumerate}

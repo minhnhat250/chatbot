@@ -1,0 +1,93 @@
+\chapter{LONG-TERM MEMORY THEO USER}
+\label{chap:long-term-memory}
+
+Bộ nhớ dài hạn (Long-term memory) giải quyết bài toán lưu giữ các thông tin ổn định của người dùng xuyên suốt qua nhiều cuộc trò chuyện (thread) khác nhau. Trong kiến trúc LangGraph, bộ nhớ dài hạn được tổ chức dưới dạng các tài liệu JSON lưu trữ trong một cấu trúc dữ liệu chuyên biệt gọi là Store. Mỗi tài liệu trong Store được định vị chính xác thông qua một không gian tên (namespace) phân cấp và một khóa (key) định danh \parencite{langchainLongTermMemory}.
+
+Để xây dựng hệ thống bộ nhớ chính xác, nhà phát triển cần phân biệt rõ ràng hai thành phần lưu trữ độc lập sau:
+
+\begin{table}[H]
+\centering
+\caption{So sánh giữa Checkpointer và Store}
+\begin{tabular}{p{3.0cm}p{5.3cm}p{6.1cm}}
+\toprule
+ & \textbf{Checkpointer (Bộ nhớ ngắn hạn)} & \textbf{Store (Bộ nhớ dài hạn)} \\
+\midrule
+Phạm vi hoạt động & Giới hạn trong phạm vi một luồng chat (\texttt{thread\_id}). & Toàn cục, hoạt động xuyên suốt tất cả các luồng chat của người dùng. \\
+Khóa truy xuất & Sử dụng \texttt{thread\_id}. & Namespace phân cấp chứa \texttt{user\_id}. \\
+Dữ liệu lưu trữ & Toàn bộ danh sách tin nhắn thô, running summary, trạng thái thực thi hiện tại. & Hồ sơ người dùng (profile), tùy chọn cá nhân (preferences), các quy tắc hành vi, thông tin chọn lọc. \\
+Ví dụ điển hình & Nội dung người dùng vừa nói ở câu chat ngay trước đó. & Người dùng yêu cầu trợ lý luôn viết mã nguồn giải thích bằng tiếng Việt. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Thiết kế cấu trúc Namespace và Key}
+
+Store lưu trữ dữ liệu dưới dạng sơ đồ đường dẫn logic (namespace), giúp chúng ta dễ dàng tổ chức phân cấp thư mục dữ liệu theo cơ chế multi-tenant hoặc phân vùng theo từng người dùng.
+
+\begingroup
+\lstinputlisting[inputencoding=utf8/latin1,language=Python,caption={Profile key-value trong InMemoryStore}]{code/long_term_memory.py}
+\endgroup
+
+\subsection{Phân tích chi tiết mã nguồn \texttt{long\_term\_memory.py}}
+\begin{itemize}
+  \item \textbf{Namespace phân cấp \texttt{profile\_namespace}:} Hàm trả về một tuple dạng \texttt{("users", user\_id, "profile")}. Đây là quy ước thiết kế namespace cực kỳ quan trọng trong LangGraph. Việc đưa \texttt{user\_id} vào vị trí thứ hai giúp chúng ta dễ dàng thực hiện phân quyền truy cập và tìm kiếm dữ liệu của một người dùng cụ thể mà không lo sợ bị chồng lấn dữ liệu giữa các tài khoản khác nhau.
+  \item \textbf{Phương thức ghi dữ liệu \texttt{save\_profile}:} Sử dụng hàm \texttt{store.put} để ghi đè hoặc ghi mới tài liệu JSON vào namespace tương ứng dưới tên khóa chính là \texttt{"main"}.
+  \item \textbf{Phương thức đọc dữ liệu \texttt{load\_profile}:} Sử dụng hàm \texttt{store.get} để lấy tài liệu từ Store. Nếu tài liệu tồn tại, chúng ta truy cập thuộc tính \texttt{item.value} để lấy nội dung từ điển JSON gốc, ngược lại trả về một từ điển rỗng.
+\end{itemize}
+
+\section{Phân loại bộ nhớ dài hạn đáng lưu trữ}
+
+Không phải mọi thông tin người dùng nói ra đều cần được đưa vào bộ nhớ dài hạn. Việc lưu trữ quá mức sẽ làm nhiễu ngữ cảnh và vi phạm các quyền riêng tư. Chúng ta chia bộ nhớ dài hạn làm ba nhóm chính:
+\begin{enumerate}
+  \item \textbf{Semantic memory (Bộ nhớ ngữ nghĩa):} Lưu trữ các dữ kiện ổn định về thực tế như tên người dùng, ngôn ngữ giao tiếp ưa thích, cấu hình môi trường phát triển của họ.
+  \item \textbf{Episodic memory (Bộ nhớ trải nghiệm):} Lưu giữ các sự kiện hoặc kinh nghiệm quan trọng đã xảy ra trong quá khứ có ích cho tương lai (ví dụ: người dùng báo hệ thống đang dùng thư viện Docker phiên bản cũ).
+  \item \textbf{Procedural memory (Bộ nhớ quy trình):} Các quy tắc ứng xử mà người dùng đặt ra cho tác tử (ví dụ: luôn đưa ra mã nguồn mẫu trước rồi mới giải thích chi tiết lý thuyết sau).
+\end{enumerate}
+
+\begin{aiwarning}[Chính sách bảo mật thông tin nhạy cảm]
+Tuyệt đối không ghi các thông tin nhạy cảm như API key, mã truy cập (tokens), mật khẩu tài khoản, thông tin thẻ thanh toán vào Store dưới dạng văn bản thô. Hệ thống cần được thiết kế đi kèm các tính năng cho phép người dùng chủ động xem lại toàn bộ thông tin tác tử đang nhớ, cập nhật hoặc yêu cầu xóa bỏ hoàn toàn (quyền được quên) các thông tin đó.
+\end{aiwarning}
+
+\section{Giải pháp kết hợp Thread và User trong một Dịch vụ hội thoại}
+
+Để tạo ra trải nghiệm người dùng tối ưu, chúng ta kết hợp đồng thời Checkpointer và Store trong một dịch vụ duy nhất mang tên \texttt{ChatService}.
+
+\begingroup
+\lstinputlisting[inputencoding=utf8/latin1,language=Python,caption={ChatService kết hợp checkpointer và Store}]{code/chat_service.py}
+\endgroup
+
+\subsection{Phân tích chi tiết luồng xử lý trong \texttt{ChatService}}
+\begin{itemize}
+  \item \textbf{Truyền ngữ cảnh thông qua \texttt{Runtime[UserContext]}:} LangGraph cung cấp cơ chế \texttt{Runtime} để truyền các tham số môi trường chạy (như \texttt{user\_id}) vào các node mà không cần phải nhồi nhét chúng vào danh sách tin nhắn hoặc cấu hình đồ thị. Bằng cách định nghĩa \texttt{context\_schema=UserContext} trong \texttt{StateGraph}, node \texttt{call\_model} có thể dễ dàng truy xuất thông tin người dùng hiện tại thông qua biến \texttt{runtime.context.user\_id}.
+  \item \textbf{Kịch bản ghi nhớ chủ động (Opt-in Memory):} Khi người dùng gửi tin nhắn chứa cụm từ ``hãy nhớ'' kèm theo việc khai báo tên, node xử lý sẽ trích xuất tên thông qua hàm \texttt{\_find\_name}, nạp thông tin profile hiện tại từ Store lên, cập nhật trường \texttt{"name"} và lưu ngược trở lại Store thông qua hàm \texttt{save\_profile}.
+  \item \textbf{Phân cấp truy xuất bộ nhớ (Memory Hierarchy Fallback):} Khi người dùng hỏi ``Tôi tên gì?'', hệ thống sẽ kiểm tra theo thứ tự ưu tiên:
+  \begin{enumerate}
+    \item Tìm kiếm thông tin tên trong lịch sử hội thoại ngắn hạn của chính luồng đó thông qua \texttt{\_find\_name(messages[:-1])}.
+    \item Nếu luồng chat mới được khởi tạo và chưa có thông tin tên, hệ thống tiếp tục truy vấn bộ nhớ dài hạn trong Store thông qua \texttt{load\_profile(self.store, user\_id)}.
+    \item Nếu cả hai nguồn lưu trữ đều không có thông tin, hệ thống mới đưa ra câu trả lời mặc định là chưa biết tên.
+  \end{enumerate}
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+ box/.style={draw=aiBlue,rounded corners,fill=aiSoftBlue,minimum width=4cm,minimum height=0.9cm,align=center},
+ store/.style={draw=aiGold,rounded corners,fill=aiSoftGold,minimum width=4cm,minimum height=1.1cm,align=center},
+ arr/.style={-{Stealth[length=2mm]},thick,aiNavy}]
+ \node[box] (t1) {Thread 1: học LangGraph};
+ \node[box,below=0.7cm of t1] (t2) {Thread 2: debug FastAPI};
+ \node[store,right=2cm of t1,yshift=-0.8cm] (profile) {User Store\\tên Nhật, tiếng Việt};
+ \draw[arr] (t1)--(profile); \draw[arr] (t2)--(profile);
+\end{tikzpicture}
+\caption{Nhiều thread của cùng user truy cập một namespace memory.}
+\label{fig:user-store}
+\figsource{Tác giả tự dựng.}
+\end{figure}
+
+\begin{aicheckpoint}[Lab 25 phút]
+Viết và chạy một bộ kiểm thử tự động giả lập hai kịch bản sau:
+\begin{enumerate}
+  \item Người dùng A ở luồng hội thoại 1 yêu cầu trợ lý ``Hãy nhớ tôi tên Nhật''. Sau đó, khởi tạo luồng hội thoại 2 cho người dùng A và hỏi trợ lý xem tên mình là gì. Kết quả mong muốn là trợ lý phải nhớ được tên Nhật.
+  \item Người dùng B ở luồng hội thoại 3 thực hiện câu hỏi hỏi tên. Kết quả mong muốn là trợ lý trả lời chưa biết tên (đảm bảo tính cách ly dữ liệu tuyệt đối giữa người dùng A và người dùng B).
+\end{enumerate}
+\end{aicheckpoint}

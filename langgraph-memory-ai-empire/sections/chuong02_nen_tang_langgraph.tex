@@ -1,0 +1,101 @@
+\chapter{STATE, NODE, EDGE VÀ GRAPH}
+\label{chap:langgraph-foundations}
+
+LangGraph là hạ tầng mức thấp cho phép xây dựng các quy trình làm việc (workflow) có trạng thái (stateful) và chạy lâu dài; bản thân nó không tự đưa ra quyết định về prompt, cấu trúc tác tử (agent), hay kiến trúc ứng dụng cụ thể nào cả \parencite{langgraphOverview}. Để học LangGraph hiệu quả nhất, chúng ta cần đi từ những khối gạch cơ bản nhất: dựng một đồ thị (graph) cực tiểu, quan sát dữ liệu đầu vào/đầu ra, và sau đó mới tích hợp cơ chế bộ nhớ.
+
+\section{State là hợp đồng dữ liệu}
+
+State (trạng thái) đại diện cho một ảnh chụp dữ liệu (data snapshot) mà các node trong đồ thị cùng đọc và cập nhật. Trong một ứng dụng chatbot, cấu trúc state tối thiểu cần phải chứa danh sách các tin nhắn trao đổi giữa người dùng và trợ lý ảo dưới khóa \texttt{messages}. 
+
+Thông thường, chúng ta sử dụng \texttt{MessagesState} của LangGraph để làm cấu trúc mặc định. \texttt{MessagesState} được tích hợp sẵn một cơ chế đặc biệt gọi là Reducer cho khóa \texttt{messages}.
+
+\begin{aidefinition}[Reducer]
+Reducer là một hàm quy định cách thức tích hợp (merge) dữ liệu mới trả về từ một Node vào State hiện tại của hệ thống. Với danh sách tin nhắn, hành vi mặc định mong muốn là ``nối tiếp (append) tin nhắn mới vào danh sách cũ''; ngược lại, với một trường thông tin như cờ tắt/mở \texttt{is\_completed}, hành vi mặc định là ``ghi đè (overwrite)'' giá trị cũ bằng giá trị mới.
+\end{aidefinition}
+
+Trong \texttt{MessagesState}, khóa \texttt{messages} được định nghĩa kèm reducer mặc định là hàm \texttt{add\_messages}. Khi một node trả về \texttt{\{"messages": [new\_msg]\}}, hàm \texttt{add\_messages} sẽ tự động duyệt qua danh sách tin nhắn hiện tại:
+\begin{itemize}
+  \item Nếu tin nhắn mới chưa có ID hoặc ID không trùng khớp với bất kỳ tin nhắn nào trong danh sách cũ, nó sẽ được nối thêm (append) vào cuối danh sách.
+  \item Nếu tin nhắn mới trùng ID với một tin nhắn cũ, tin nhắn cũ đó sẽ được cập nhật (update) nội dung bằng tin nhắn mới. Đây là cơ chế nền tảng giúp thực hiện cập nhật nội dung tin nhắn streaming hoặc chỉnh sửa lịch sử.
+\end{itemize}
+
+\section{Node là hàm Python}
+
+Mỗi Node trong đồ thị thực chất chỉ là một hàm Python nhận vào trạng thái hiện tại (State) và trả về một phần dữ liệu cập nhật (được gọi là delta state dưới dạng một từ điển Python).
+
+\begin{lstlisting}[language=Python,caption={Hợp đồng của một model node}]
+def call_model(state: MessagesState) -> dict:
+    latest = state["messages"][-1].content
+    response = make_response(latest)
+    return {"messages": [response]}
+\end{lstlisting}
+
+\subsection{Lưu ý quan trọng khi viết Node}
+Node không nhất thiết phải trả về toàn bộ State. Nó chỉ cần trả về phần dữ liệu thay đổi (delta) mà nó chịu trách nhiệm tạo ra. LangGraph sẽ tự động lấy dữ liệu delta này và áp dụng reducer tương ứng để cập nhật vào State chung. Thiết kế này giúp hệ thống cực kỳ dễ quan sát, cho phép ghi lại log chính xác từng bước biến đổi của dữ liệu.
+
+\section{Edge định nghĩa thứ tự thực thi}
+
+Edge (cạnh) định nghĩa luồng di chuyển của dữ liệu giữa các node. Đồ thị LangGraph bắt đầu từ điểm xuất phát đặc biệt tên là \texttt{START} và kết thúc tại điểm dừng chân \texttt{END}.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+ node distance=1.7cm,
+ flowbox/.style={draw=aiBlue,rounded corners,fill=aiSoftBlue,minimum width=3.4cm,minimum height=1cm,align=center},
+ terminal/.style={draw=aiNavy,fill=aiSoftGold,minimum width=2cm,minimum height=0.9cm,align=center},
+ arr/.style={-{Stealth[length=2mm]},thick,aiNavy}]
+ \node[terminal] (start) {START};
+ \node[flowbox,right=of start] (call) {\texttt{call\_model}};
+ \node[terminal,right=of call] (end) {END};
+ \draw[arr] (start)--(call); \draw[arr] (call)--(end);
+\end{tikzpicture}
+\caption{Graph hội thoại nhỏ nhất chưa có persistence.}
+\label{fig:minimal-graph}
+\figsource{Tác giả tự dựng theo LangGraph Graph API.}
+\end{figure}
+
+Dưới đây là ví dụ hoàn chỉnh về đồ thị tối giản có thể thực thi độc lập:
+
+\begingroup
+\lstinputlisting[inputencoding=utf8/latin1,language=Python,caption={Graph chạy được không cần API key}]{code/graph_basics.py}
+\endgroup
+
+\subsection{Giải thích từng dòng code trong \texttt{graph\_basics.py}}
+\begin{itemize}
+  \item \textbf{Dòng 9-11:} Định nghĩa node \texttt{call\_model}. Node này lấy tin nhắn cuối cùng trong danh sách \texttt{state["messages"][-1].content}, bọc nó lại bằng một tin nhắn dạng \texttt{AIMessage} kèm tiền tố ``Đã nhận: '', rồi trả về delta dạng \texttt{\{"messages": [AIMessage(...)]\}}.
+  \item \textbf{Dòng 14:} Khởi tạo đồ thị \texttt{StateGraph} sử dụng cấu trúc state \texttt{MessagesState}.
+  \item \textbf{Dòng 15:} Khai báo node \texttt{"call\_model"} vào đồ thị bằng hàm \texttt{builder.add\_node}.
+  \item \textbf{Dòng 16-17:} Nối luồng thực thi từ \texttt{START} đến node \texttt{"call\_model"} và từ node \texttt{"call\_model"} đến \texttt{END} thông qua \texttt{builder.add\_edge}.
+  \item \textbf{Dòng 18:} Gọi phương thức \texttt{compile()} để đóng băng và kiểm tra tính hợp lệ về logic của đồ thị. Đồ thị lúc này sẵn sàng để chạy thông qua hàm \texttt{invoke}.
+  \item \textbf{Dòng 22-23:} Đoạn \texttt{sys.stdout.reconfigure(encoding="utf-8")} đảm bảo các ký tự tiếng Việt Unicode hiển thị chính xác trên console Windows.
+\end{itemize}
+
+\section{Compile không đồng nghĩa với Persistence}
+
+Hàm \texttt{builder.compile()} chịu trách nhiệm biên dịch đồ thị, chuyển đổi cấu trúc định nghĩa (StateGraph) thành một đối tượng đồ thị thực thi được. Tuy nhiên, bản thân quá trình \texttt{compile()} này không đi kèm việc lưu trữ lịch sử lâu dài. 
+
+Nếu bạn muốn đồ thị tự động ghi nhớ lịch sử hội thoại xuyên suốt nhiều lượt gọi, bạn bắt buộc phải truyền thêm một cơ chế lưu trữ checkpoint (gọi là checkpointer) trong lúc biên dịch đồ thị:
+
+\begin{lstlisting}[language=Python,caption={Cùng graph, khác năng lực lưu state}]
+stateless_graph = builder.compile()
+stateful_graph = builder.compile(checkpointer=checkpointer)
+\end{lstlisting}
+
+\begin{aiwarning}[Nhầm lẫn thường gặp]
+\texttt{MessagesState} chỉ là cấu trúc mô tả cách thức lưu trữ dữ liệu tin nhắn trong bộ nhớ RAM tạm thời của một lượt gọi; nó hoàn toàn không có khả năng tự lưu giữ tin nhắn qua nhiều lượt gọi độc lập. Chỉ khi tích hợp \texttt{checkpointer}, LangGraph mới kích hoạt khả năng bền vững hóa dữ liệu (persistence) theo từng phiên (\texttt{thread\_id}).
+\end{aiwarning}
+
+\section{Đọc đồ thị bằng năm câu hỏi vàng}
+
+Mỗi khi tiếp cận hoặc thiết kế bất kỳ đồ thị LangGraph nào, hãy tự trả lời năm câu hỏi sau:
+\begin{enumerate}
+  \item Cấu trúc State schema gồm có những khóa nào và kiểu dữ liệu là gì?
+  \item Mỗi Node thực hiện đọc dữ liệu từ khóa nào và trả về delta ở khóa nào?
+  \item Cạnh (edge) hay điều kiện (conditional edge) nào quyết định luồng chuyển tiếp giữa các node?
+  \item Đồ thị được compile kèm theo checkpointer (cho lưu trữ ngắn hạn) hay store (cho lưu trữ dài hạn) nào?
+  \item Khi gọi thực thi đồ thị bằng \texttt{invoke()}, cấu hình (config) và ngữ cảnh chạy (runtime context) mang những định danh (\texttt{thread\_id}, \texttt{user\_id}) nào?
+\end{enumerate}
+
+\begin{aicheckpoint}[Lab 20 phút]
+Thêm một node trung gian mang tên \texttt{normalize\_input} vào trước node \texttt{call\_model}. Node này có nhiệm vụ chuẩn hóa văn bản của tin nhắn người dùng gửi lên (loại bỏ khoảng trắng dư thừa ở đầu và cuối văn bản). Hãy vẽ lại sơ đồ đồ thị mới, dự đoán giá trị State thay đổi qua từng bước và viết kiểm thử assert cho kết quả đầu ra.
+\end{aicheckpoint}

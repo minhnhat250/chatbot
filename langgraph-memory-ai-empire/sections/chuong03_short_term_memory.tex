@@ -1,0 +1,104 @@
+\chapter{SHORT-TERM MEMORY THEO THREAD}
+\label{chap:short-term}
+
+Short-term memory (bộ nhớ ngắn hạn) trong kiến trúc tác tử là vùng nhớ trạng thái được gắn chặt với một phiên hội thoại cụ thể, được xác định thông qua mã định danh luồng trò chuyện (\texttt{thread\_id}). Khi một đồ thị được biên dịch (compile) kèm theo một checkpointer, LangGraph sẽ tự động lưu lại trạng thái (State) dưới dạng các điểm kiểm tra (checkpoint) sau mỗi bước thực thi của đồ thị và khôi phục lại trạng thái này ở lần gọi tiếp theo \parencite{langgraphPersistence}.
+
+\section{Tích hợp InMemorySaver vào đồ thị}
+
+Cách đơn giản nhất để kích hoạt bộ nhớ ngắn hạn là sử dụng lớp lưu trữ tạm thời trong RAM mang tên \texttt{InMemorySaver}.
+
+\begin{lstlisting}[language=Python,caption={Ba dòng tạo short-term memory}]
+from langgraph.checkpoint.memory import InMemorySaver
+
+checkpointer = InMemorySaver()
+graph = builder.compile(checkpointer=checkpointer)
+config = {"configurable": {"thread_id": "thread-a"}}
+\end{lstlisting}
+
+Mỗi khi bạn gọi phương thức \texttt{graph.invoke(input, config)} với cùng một cấu hình chứa \texttt{thread\_id}, LangGraph sẽ tự động thực hiện chu trình khép kín:
+\begin{enumerate}
+  \item Truy vấn cơ sở dữ liệu checkpointer để nạp checkpoint trạng thái gần nhất tương ứng với \texttt{thread\_id}.
+  \item Hợp nhất (merge) dữ liệu đầu vào mới của người dùng vào trạng thái vừa nạp thông qua các hàm Reducer.
+  \item Thực thi tuần tự các node trong đồ thị.
+  \item Ghi nhận trạng thái cập nhật mới nhất thành một checkpoint mới vào cơ sở dữ liệu trước khi trả về kết quả cho người dùng.
+\end{enumerate}
+
+Dưới đây là ví dụ hoàn chỉnh triển khai kiểm thử độc lập hai luồng hội thoại song song:
+
+\begingroup
+\lstinputlisting[inputencoding=utf8/latin1,language=Python,caption={Hai conversation độc lập bằng InMemorySaver}]{code/short_term_memory.py}
+\endgroup
+
+\subsection{Phân tích chi tiết mã nguồn \texttt{short\_term\_memory.py}}
+\begin{itemize}
+  \item \textbf{Hàm tiện ích \texttt{\_find\_name}:} Hàm này chịu trách nhiệm duyệt ngược danh sách tin nhắn để tìm kiếm thông tin khai báo tên từ người dùng bằng cụm từ khóa ``tôi tên là'' hoặc ``tôi tên''. Hàm này hoạt động độc lập với LLM API, giúp đảm bảo các kịch bản kiểm thử hành vi bộ nhớ diễn ra một cách ổn định và dễ đoán định.
+  \item \textbf{Hàm giả lập LLM \texttt{deterministic\_model}:} Hàm này đóng vai trò thay thế mô hình ngôn ngữ thực tế bằng các quy tắc logic xác định:
+  \begin{itemize}
+    \item Nếu người dùng hỏi tên mình (chứa cụm từ ``tôi tên gì''), hàm sẽ tìm kiếm thông tin tên trong lịch sử các tin nhắn cũ từ trước (loại trừ tin nhắn hiện tại chứa câu hỏi hỏi tên: \texttt{messages[:-1]}).
+    \item Nếu người dùng khai báo tên hoặc nói các câu thông thường, nó sẽ chào hoặc thông báo đã nhận được tin nhắn.
+  \end{itemize}
+  \item \textbf{Hàm khởi tạo đồ thị \texttt{build\_graph}:} Hàm này tạo ra một đồ thị \texttt{StateGraph} từ cấu trúc \texttt{MessagesState}, liên kết node xử lý và biên dịch đồ thị bằng việc gán checkpointer \texttt{InMemorySaver} mặc định nếu người dùng không truyền đối tượng cụ thể nào vào.
+  \item \textbf{Hàm \texttt{ask} tiện ích:} Hàm này bọc lệnh gọi đồ thị bằng cách thiết lập cấu hình \texttt{config = \{"configurable": \{"thread\_id": thread\_id\}\}} để chỉ định rõ luồng hội thoại.
+\end{itemize}
+
+\section{Dòng thời gian thực thi của hai luồng hội thoại độc lập}
+
+Sử dụng cùng một đồ thị đã biên dịch kèm theo duy nhất một đối tượng checkpointer, trạng thái của hai cuộc trò chuyện được cách ly hoàn toàn dựa vào khóa \texttt{thread\_id}:
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+ event/.style={draw=aiBlue,rounded corners,fill=aiSoftBlue,minimum width=4.8cm,minimum height=0.8cm,align=center},
+ arr/.style={-{Stealth[length=2mm]},thick,aiNavy}]
+ \node[event] (a1) {A: Tôi tên Nhật};
+ \node[event,below=0.7cm of a1] (a2) {A: Tôi tên gì? $\rightarrow$ Nhật};
+ \node[event,right=2cm of a1] (b1) {B: Tôi tên An};
+ \node[event,below=0.7cm of b1] (b2) {B: Tôi tên gì? $\rightarrow$ An};
+ \draw[arr] (a1)--(a2); \draw[arr] (b1)--(b2);
+ \node[above=0.25cm of a1,aiBlue,font=\bfseries] {\texttt{thread-a}};
+ \node[above=0.25cm of b1,aiBlue,font=\bfseries] {\texttt{thread-b}};
+\end{tikzpicture}
+\caption{Cùng graph và checkpointer, state được phân vùng bởi thread.}
+\label{fig:two-threads}
+\figsource{Tác giả tự dựng.}
+\end{figure}
+
+\section{Nguyên tắc gửi tin nhắn mới từ phía Client}
+
+Một lỗi lập trình cực kỳ phổ biến khi chuyển đổi từ kiến trúc chatbot thủ công sang sử dụng hệ thống checkpointer của LangGraph là việc client tiếp tục gửi kèm toàn bộ lịch sử trò chuyện cũ ở mỗi request:
+
+\begin{lstlisting}[language=Python,caption={Input đúng khi backend sở hữu history}]
+graph.invoke(
+    {"messages": [{"role": "user", "content": new_message}]},
+    {"configurable": {"thread_id": thread_id}},
+)
+\end{lstlisting}
+
+\begin{aiwarning}[Tránh gửi lại lịch sử hội thoại]
+Nếu phía client (giao diện người dùng) vừa gửi lại toàn bộ lịch sử hội thoại vừa sử dụng cơ chế lưu checkpoint của LangGraph trên backend, reducer \texttt{add\_messages} sẽ tự động nhân bản (duplicate) các tin nhắn cũ và nối thêm chúng vào trạng thái hiện tại. Lỗi này làm tăng đột biến chi phí token đầu vào mà mắt thường rất khó phát hiện ra, do các giao diện UI thông thường chỉ render hiển thị một tin nhắn duy nhất một lần dựa trên ID.
+\end{aiwarning}
+
+\section{Sự khác biệt giữa Thread ID và Quyền truy cập}
+
+\begin{aiwarning}[Bảo mật Thread ID]
+Việc biết hoặc tạo ra một chuỗi định danh \texttt{thread\_id} dạng ngẫu nhiên (UUID) hoàn toàn không tương đương với việc người dùng đó được phép truy cập cuộc trò chuyện đó. Ở môi trường production thực tế, tầng ứng dụng web (API gateway) bắt buộc phải kiểm tra thông tin người dùng được xác thực (\texttt{user\_id}) có thực sự sở hữu phiên trò chuyện (\texttt{thread\_id}) đó hay không trước khi thực hiện các lệnh đọc hoặc ghi vào đồ thị.
+\end{aiwarning}
+
+\section{Đọc trạng thái đồ thị phục vụ Debug và Hiển thị lịch sử}
+
+Để kiểm tra trực tiếp trạng thái hiện tại của đồ thị hoặc lấy toàn bộ lịch sử tin nhắn phục vụ hiển thị trên giao diện người dùng, chúng ta có thể sử dụng phương thức \texttt{get\_state}:
+
+\begin{lstlisting}[language=Python,caption={Đọc snapshot hiện tại của thread}]
+config = {"configurable": {"thread_id": "thread-a"}}
+snapshot = graph.get_state(config)
+
+for message in snapshot.values["messages"]:
+    print(message.type, message.content)
+\end{lstlisting}
+
+\subsection{Lưu ý khi sử dụng \texttt{get\_state}}
+Phương thức \texttt{get\_state} trả về đối tượng chứa toàn bộ thông tin trạng thái tại thời điểm checkpoint hiện tại. Đối tượng này rất hữu ích cho các chức năng debug hoặc xây dựng API trả về lịch sử trò chuyện. Tuy nhiên, API không được phép trả về trực tiếp toàn bộ thông tin thô của checkpoint ra ngoài client nếu trong đó chứa các thông tin nhạy cảm của các node nội bộ như kết quả gọi tool hay các biến trạng thái trung gian.
+
+\begin{aicheckpoint}[Lab 25 phút]
+Chạy thử tệp tin \texttt{short\_term\_memory.py}. Hãy bổ sung thêm luồng hội thoại của người dùng C, không khai báo thông tin tên và thực hiện câu hỏi ``Tôi tên gì?''. Sau đó, thử cố tình gửi yêu cầu của người dùng B nhưng lại truyền nhầm \texttt{thread\_id} của cuộc trò chuyện A để quan sát hiện tượng rò rỉ dữ liệu (data leak). Hãy viết mã test tự động chứng minh sự cách ly hoàn toàn giữa 3 phiên trò chuyện.
+\end{aicheckpoint}

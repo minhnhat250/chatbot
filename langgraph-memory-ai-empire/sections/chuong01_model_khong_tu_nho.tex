@@ -1,0 +1,104 @@
+\chapter{MODEL KHÔNG TỰ NHỚ}
+\label{chap:model-no-memory}
+
+\section{Nguyên lý Stateless của LLM và Giao thức HTTP}
+
+Mọi mô hình ngôn ngữ lớn (LLM), dù là DeepSeek, Gemini hay GPT, đều hoạt động theo mô hình không trạng thái (stateless) ở tầng API. Khi bạn gửi một yêu cầu (request) đến máy chủ của nhà cung cấp LLM, yêu cầu đó được đóng gói và xử lý độc lập hoàn toàn với các yêu cầu trước hoặc sau nó. Máy chủ LLM không duy trì bất kỳ bộ nhớ đệm hay phiên làm việc nào lưu lại vết các câu hỏi trước đó của bạn trên cùng một kênh kết nối mạng.
+
+Hãy coi mỗi lần gọi model là gửi một phong bì thư kín. Mô hình chỉ đọc các tờ giấy nằm trong chính phong bì đó để tạo ra câu trả lời và ngay lập tức quên đi nội dung sau khi gửi thư phản hồi (response) lại cho bạn. Do đó, request đầu tiên chứa thông tin ``Tôi tên Nhật'' sẽ không tự động xuất hiện trong request thứ hai chứa câu hỏi ``Tôi tên gì?''. Nếu ứng dụng client không tự động đính kèm lịch sử trò chuyện vào phong bì mới, mô hình sẽ hoàn toàn không có dữ liệu để trả lời và sẽ báo lỗi hoặc trả lời rằng nó chưa biết thông tin đó.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+ box/.style={draw=aiBlue,rounded corners,fill=aiSoftBlue,minimum width=4.3cm,minimum height=1.15cm,align=center},
+ model/.style={draw=aiNavy,rounded corners,fill=aiSoftGold,minimum width=3.3cm,minimum height=1.3cm,align=center},
+ arr/.style={-{Stealth[length=2mm]},thick,aiNavy}]
+ \node[box] (r1) {Request 1\\\texttt{user: Tôi tên Nhật}};
+ \node[model,right=1.2cm of r1] (m1) {LLM};
+ \node[box,right=1.2cm of m1] (a1) {Response 1\\\texttt{Chào Nhật}};
+ \node[box,below=1.1cm of r1] (r2) {Request 2\\\texttt{user: Tôi tên gì?}};
+ \node[model,right=1.2cm of r2] (m2) {LLM mới gọi};
+ \node[box,right=1.2cm of m2] (a2) {Thiếu dữ kiện\\\texttt{Tôi chưa biết}};
+ \draw[arr] (r1)--(m1); \draw[arr] (m1)--(a1);
+ \draw[arr] (r2)--(m2); \draw[arr] (m2)--(a2);
+\end{tikzpicture}
+\caption{Hai request độc lập khi ứng dụng không gửi lại lịch sử.}
+\label{fig:stateless-requests}
+\figsource{Tác giả tự dựng.}
+\end{figure}
+
+\section{Ba lớp thường bị gọi chung là ``lịch sử''}
+
+Trong một ứng dụng chatbot hoàn chỉnh, từ ``lịch sử'' (history) thường được sử dụng rất mơ hồ và dễ dẫn đến nhầm lẫn trong thiết kế hệ thống. Để xây dựng hệ thống bộ nhớ chuẩn xác, chúng ta cần phân biệt rõ ba lớp lưu trữ lịch sử sau đây:
+
+\begin{table}[H]
+\centering
+\caption{Ba lớp history trong một ứng dụng chat}
+\begin{tabular}{p{3.3cm}p{5.1cm}p{6.2cm}}
+\toprule
+\textbf{Lớp} & \textbf{Mục đích} & \textbf{Ví dụ} \\
+\midrule
+UI history & Vẽ lại bong bóng chat trên giao diện người dùng & Biến cục bộ trong frontend như \texttt{st.session\_state.messages} trong Streamlit hoặc state React. \\
+Persistent history & Lưu trữ lâu dài và khôi phục sau khi reload trang hoặc restart server & Lưu trữ vật lý trong cơ sở dữ liệu như SQLite, PostgreSQL, MongoDB hoặc các checkpoint của LangGraph. \\
+Model context & Lát cắt dữ liệu thực tế được đưa vào prompt gửi đến LLM API & Tổ hợp bao gồm: System prompt + Lược sử đã rút gọn (summary) + Các message hội thoại gần nhất. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Nhà phát triển rất dễ phạm phải hai sai lầm đối lập:
+\begin{enumerate}
+  \item \textbf{Lỗi hiển thị ảo:} Thấy giao diện UI hiển thị đầy đủ bong bóng hội thoại cũ nên lầm tưởng mô hình LLM đã ``nhớ'' mọi chuyện, trong khi thực chất mã nguồn backend chỉ gửi duy nhất tin nhắn mới nhất đến LLM.
+  \item \textbf{Lỗi quá tải context:} Lưu trữ được bao nhiêu tin nhắn trong database thì gửi toàn bộ bấy nhiêu tin nhắn vào LLM ở mỗi lượt gọi. Lỗi này khiến chi phí token đầu vào tăng phi mã và làm tăng độ trễ (latency) của mô hình một cách không cần thiết.
+\end{enumerate}
+
+\section{Xây dựng bộ nhớ thủ công bằng Python thuần}
+
+Để hiểu cách các framework như LangGraph tự động hóa quy trình quản lý lịch sử, trước tiên chúng ta hãy tự xây dựng một giải pháp quản lý bộ nhớ thủ công bằng Python thuần thông qua mã nguồn \texttt{manual\_history.py}.
+
+\begingroup
+\lstinputlisting[inputencoding=utf8/latin1,language=Python,caption={Giữ lịch sử bằng Python thuần}]{code/manual_history.py}
+\endgroup
+
+\subsection{Phân tích chi tiết mã nguồn}
+\begin{itemize}
+  \item \textbf{Định nghĩa kiểu dữ liệu \texttt{Message}:} Dòng \texttt{Message = dict[str, str]} định nghĩa cấu trúc của một tin nhắn dưới dạng từ điển (dictionary) có hai khóa chính: \texttt{"role"} (đại diện cho vai trò gửi tin nhắn như \texttt{"user"}, \texttt{"assistant"}, hoặc \texttt{"system"}) và \texttt{"content"} (nội dung văn bản của tin nhắn).
+  \item \textbf{Hàm giả lập LLM \texttt{fake\_model}:} Hàm này nhận vào danh sách lịch sử tin nhắn \texttt{messages}. Nhằm tránh phụ thuộc vào API key, hàm sử dụng các quy tắc logic đơn giản:
+  \begin{itemize}
+    \item Nếu tin nhắn cuối cùng chứa câu hỏi hỏi tên (``tôi tên gì''), hàm sẽ duyệt ngược danh sách các tin nhắn cũ từ dưới lên để tìm tin nhắn của người dùng chứa cụm từ ``Tôi tên ''. Nếu tìm thấy, nó sẽ trích xuất tên và trả về.
+    \item Nếu không tìm thấy thông tin tên trong lịch sử, nó trả về thông điệp mặc định ``Tôi chưa biết tên bạn.''.
+  \end{itemize}
+  \item \textbf{Class quản lý hội thoại \texttt{ManualConversation}:} Class này sử dụng decorator \texttt{@dataclass} để tự động tạo phương thức khởi tạo \texttt{\_\_init\_\_}. Trường \texttt{messages: list[Message]} được gán giá trị mặc định là một danh sách rỗng thông qua \texttt{field(default\_factory=list)}.
+  \item \textbf{Hàm xử lý hội thoại \texttt{ask}:} Hàm này thực thi theo đúng quy trình 3 bước nền tảng của một chatbot:
+  \begin{enumerate}
+    \item Đưa tin nhắn mới của người dùng vào lịch sử lưu trữ: \texttt{self.messages.append(\dots)}.
+    \item Gọi mô hình (ở đây là \texttt{fake\_model}) bằng cách truyền toàn bộ danh sách lịch sử \texttt{self.messages}.
+    \item Đưa câu trả lời của mô hình vào lịch sử lưu trữ và trả lại kết quả cho người dùng.
+  \end{enumerate}
+\end{itemize}
+
+\begin{aiexample}[Dự đoán trước khi chạy]
+Nếu tạo hai đối tượng độc lập \texttt{chat1 = ManualConversation()} và \texttt{chat2 = ManualConversation()}, sau đó gọi \texttt{chat1.ask("Tôi tên Nhật.")} và \texttt{chat2.ask("Tôi tên gì?")}, kết quả của câu gọi thứ hai chắc chắn sẽ là ``Tôi chưa biết tên bạn.''. Điều này chứng minh mỗi đối tượng lớp sở hữu một vùng nhớ độc lập hoàn toàn.
+\end{aiexample}
+
+\section{Vì sao danh sách thuần chưa đủ cho backend?}
+
+Mặc dù giải pháp lưu trữ lịch sử bằng danh sách trong bộ nhớ RAM hoạt động tốt đối với một script chạy đơn lẻ trên local, nhưng khi đưa lên môi trường web backend (ví dụ như FastAPI) chạy thực tế, chúng ta sẽ lập tiếp đối mặt với những bài toán phức tạp sau:
+
+\begin{itemize}
+  \item \textbf{Định danh luồng (Thread Identification):} Làm cách nào để phân biệt tin nhắn gửi lên thuộc về cuộc hội thoại nào khi có hàng trăm request đồng thời từ nhiều người dùng khác nhau gửi về backend?
+  \item \textbf{Bảo mật và phân quyền (Authorization):} Làm sao đảm bảo người dùng A không thể đọc được lịch sử trò chuyện của người dùng B thông qua việc đoán hoặc quét ID?
+  \item \textbf{Mất mát dữ liệu khi khởi động lại (Volatility):} Dữ liệu lưu hoàn toàn trên RAM sẽ biến mất ngay khi tiến trình ứng dụng khởi động lại hoặc khi ứng dụng tự động scale-out thêm các worker mới.
+  \item \textbf{Giới hạn kích thước ngữ cảnh (Context Overflow):} Làm cách nào để tránh việc gửi một danh sách lịch sử quá dài vượt ngưỡng xử lý tối đa của mô hình?
+\end{itemize}
+
+\begin{aidefinition}[Hai định danh cốt lõi]
+Để giải quyết các vấn đề trên, hệ thống cần quản lý chặt chẽ hai định danh độc lập:
+\begin{enumerate}
+  \item \texttt{thread\_id}: Định danh duy nhất cho một phiên trò chuyện cụ thể.
+  \item \texttt{user\_id}: Định danh duy nhất cho một người dùng cụ thể. Một người dùng có thể sở hữu nhiều \texttt{thread\_id} khác nhau, nhưng một \texttt{thread\_id} chỉ thuộc quyền sở hữu của một \texttt{user\_id} duy nhất.
+\end{enumerate}
+\end{aidefinition}
+
+\begin{aicheckpoint}[Lab 15 phút]
+Chạy thử tệp \texttt{manual\_history.py}. Sau đó, viết thêm một đoạn mã khởi tạo song song hai đối tượng hội thoại \texttt{chat\_a} và \texttt{chat\_b}. Thực hiện tuần tự việc khai báo tên ở từng cuộc hội thoại và hỏi lại để đảm bảo dữ liệu không bị trộn lẫn giữa các đối tượng.
+\end{aicheckpoint}

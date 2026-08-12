@@ -1,0 +1,54 @@
+\chapter*{Cách học và kế hoạch 10 buổi}
+\addcontentsline{toc}{chapter}{Cách học và kế hoạch 10 buổi}
+
+\begin{aicheckpoint}[Nhịp học đề xuất]
+Mỗi chương theo vòng lặp: dự đoán trước khi chạy; chạy ví dụ nhỏ nhất; vẽ lại state; cố ý dùng
+sai \texttt{thread\_id}; chạy test; cuối cùng áp dụng vào LLM Gateway. Học viên nên chủ động
+ít nhất một nửa thời lượng thay vì chỉ xem giảng viên gõ code.
+\end{aicheckpoint}
+
+\begin{longtable}{p{1.0cm}p{4.9cm}p{2.9cm}p{5.1cm}}
+\caption{Kế hoạch học theo từng buổi 90 phút}\label{tab:course-plan}\\
+\toprule
+\textbf{Buổi} & \textbf{Trọng tâm} & \textbf{Thực hành} & \textbf{Minh chứng hoàn thành} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Buổi} & \textbf{Trọng tâm} & \textbf{Thực hành} & \textbf{Minh chứng hoàn thành} \\
+\midrule
+\endhead
+1 & Model context và ba lớp history & Python thuần & Model giả trả đúng tên khi có history. \\
+2 & State, node, edge, graph & Graph nhỏ nhất & Vẽ và chạy được graph một node. \\
+3 & Checkpointer, thread, checkpoint & Hai thread & Nhật và An không bị trộn tên. \\
+4 & Context window và token budget & Trim & Chứng minh storage đầy đủ nhưng model input ngắn. \\
+5 & Running summary & Compact history & Summary giữ quyết định, message gần vẫn nguyên văn. \\
+6 & Store và user memory & Hai user, nhiều thread & Memory đi qua thread nhưng không đi qua user. \\
+7 & SQLite/PostgreSQL & Thiết kế persistence & Chọn backend và mô tả vòng đời dữ liệu. \\
+8 & FastAPI/Streamlit & Conversation API & Tạo, chat, đọc và xóa một thread. \\
+9 & Test, log, privacy & Failure lab & Test ownership và test restart. \\
+10 & Dự án cuối khóa & LLM Gateway & Demo end-to-end và báo cáo trade-off. \\
+\bottomrule
+\end{longtable}
+
+\section*{Cấu trúc một buổi 90 phút}
+
+\begin{itemize}
+  \item \textbf{0--8 phút:} kiểm tra mục tiêu và dự đoán output.
+  \item \textbf{8--20 phút:} mô hình tinh thần bằng một ví dụ cụ thể.
+  \item \textbf{20--35 phút:} giảng viên demo và nói rõ state thay đổi ở đâu.
+  \item \textbf{35--55 phút:} thực hành có hướng dẫn, gồm một lỗi cố ý.
+  \item \textbf{55--75 phút:} học viên tự áp dụng vào biến thể gần dự án thật.
+  \item \textbf{75--85 phút:} chạy test, phản hồi theo rubric, sửa một lần.
+  \item \textbf{85--90 phút:} chốt artifact và bài tập về nhà.
+\end{itemize}
+
+\section*{Cách đọc code}
+
+Mỗi listing quan trọng trong sách lấy từ thư mục \texttt{code/}. Trước khi chạy, hãy trả lời bốn
+câu: input mới là gì; state cũ nằm ở đâu; hàm nào thay state; output nào được lưu lại. Nếu chưa
+trả lời được, đừng vội đổi sang model thật.
+
+\begin{aiwarning}[Fallback khi không có API key]
+Không bỏ qua lab. Model quyết định trong tài liệu cố ý không cần API. Memory là thuộc tính của
+ứng dụng; ta có thể kiểm thử chính xác mà không cần một LLM sinh văn bản.
+\end{aiwarning}

@@ -1,0 +1,22 @@
+\babel@toc {vietnamese}{}\relax 
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {1.1}{\ignorespaces Hai request độc lập khi ứng dụng không gửi lại lịch sử.}}{1}{figure.caption.3}%
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {2.1}{\ignorespaces Graph hội thoại nhỏ nhất chưa có persistence.}}{6}{figure.caption.5}%
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {3.1}{\ignorespaces Cùng graph và checkpointer, state được phân vùng bởi thread.}}{11}{figure.caption.6}%
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {4.1}{\ignorespaces Trim tạo view cho model nhưng có thể giữ storage đầy đủ.}}{16}{figure.caption.7}%
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {5.1}{\ignorespaces Running summary chỉ chạy khi history vượt ngưỡng.}}{19}{figure.caption.9}%
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {6.1}{\ignorespaces Nhiều thread của cùng user truy cập một namespace memory.}}{26}{figure.caption.11}%
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {8.1}{\ignorespaces Ranh giới thành phần trong LLM Gateway có memory.}}{33}{figure.caption.13}%
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {10.1}{\ignorespaces Kiến trúc tham chiếu cho dự án cuối khóa.}}{41}{figure.caption.15}%
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }

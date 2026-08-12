@@ -1,0 +1,90 @@
+\chapter{QUẢN LÝ CONTEXT DÀI}
+\label{chap:long-context}
+
+Khả năng lưu trữ dữ liệu (persistence) trả lời cho câu hỏi: ``Hệ thống có thể lưu giữ lại được những gì?''. Trong khi đó, quản lý ngữ cảnh (context management) trả lời cho câu hỏi: ``Trong lượt gọi mô hình hiện tại, LLM thực tế được đọc những gì?''. Đây là hai bài toán hoàn toàn độc lập và cần được phân tách rõ ràng. Một phiên trò chuyện có thể đã tích lũy tới 2.000 tin nhắn để phục vụ công tác đối soát dữ liệu (audit), nhưng khi gọi LLM, chúng ta chỉ nên gửi một bản tóm tắt (summary) kèm theo khoảng 20 tin nhắn gần nhất.
+
+\section{Vì sao ngữ cảnh quá dài không hề miễn phí?}
+
+Mặc dù các mô hình ngôn ngữ thế hệ mới hỗ trợ kích thước ngữ cảnh (context window) lên đến hàng trăm nghìn hoặc hàng triệu token, việc gửi toàn bộ lịch sử dài vào mô hình ở mỗi request mang lại nhiều tác hại nghiêm trọng:
+\begin{itemize}
+  \item \textbf{Độ trễ (Latency) tăng cao:} Thời gian xử lý mã hóa đầu vào (prompt processing) tăng tuyến tính theo độ dài văn bản gửi lên.
+  \item \textbf{Chi phí tài chính gia tăng:} Bạn phải trả tiền cho mỗi token đầu vào ở mỗi lượt gọi. Gửi lịch sử lặp đi lặp lại sẽ làm chi phí tăng lũy tiến rất nhanh.
+  \item \textbf{Sự phân tâm của mô hình (Lost in the Middle):} LLM có xu hướng chú ý nhiều hơn đến thông tin ở phần đầu và phần cuối của ngữ cảnh, trong khi dễ bỏ sót các chi tiết quan trọng nằm ở giữa. Thông tin cũ, lỗi thời hoặc lạc đề có thể làm giảm đáng kể độ chính xác của câu trả lời.
+\end{itemize}
+
+Để giải quyết bài toán này, tài liệu LangChain chia sẻ ba chiến lược xử lý lịch sử phổ biến: cắt bớt (trim), xóa vĩnh viễn (delete), và tóm tắt (summarize) \parencite{langchainShortTermMemory}.
+
+\begin{aidefinition}[Token budget]
+Token budget (ngân sách token) là giới hạn số lượng token tối đa được phân bổ cho toàn bộ dữ liệu đầu vào gửi đến mô hình trong một lượt gọi, bao gồm: system instruction (chỉ dẫn hệ thống), long-term memory (bộ nhớ dài hạn), running summary, các tin nhắn gần nhất, tài liệu tham khảo RAG và kết quả của các công cụ (tool results). Không bao giờ được sử dụng 100\% kích thước context window của mô hình cho phần lịch sử đầu vào, vì mô hình cần khoảng trống ngữ cảnh còn lại để sinh ra nội dung câu trả lời (output reserve).
+\end{aidefinition}
+
+\section{Cắt bớt tin nhắn bằng kỹ thuật tạo View ngữ cảnh}
+
+Chúng ta có thể giới hạn số lượng tin nhắn gửi đến mô hình bằng cách tạo ra một lát cắt (view) tạm thời từ danh sách tin nhắn đầy đủ mà không làm ảnh hưởng đến lịch sử lưu trữ gốc trong cơ sở dữ liệu.
+
+\begingroup
+\lstinputlisting[inputencoding=utf8/latin1,language=Python,firstline=1,lastline=28,caption={Trim bản input, không xóa storage}]{code/context_management.py}
+\endgroup
+
+\subsection{Phân tích chi tiết hàm \texttt{context\_for\_model}}
+Hàm sử dụng phương thức \texttt{trim\_messages} của LangChain để lọc tin nhắn dựa trên ngân sách token:
+\begin{itemize}
+  \item \textbf{\texttt{strategy="last"}:} Chỉ định cắt từ đầu danh sách và giữ lại các tin nhắn ở cuối danh sách (các tin nhắn gần đây nhất).
+  \item \textbf{\texttt{token\_counter=count\_tokens\_approximately}:} Hàm đếm số lượng token ước tính dựa trên độ dài chuỗi ký tự (hoặc có thể cấu hình bằng tokenizer thực tế của mô hình như tiktoken).
+  \item \textbf{\texttt{max\_tokens=max\_tokens}:} Ngân sách token tối đa cho phép của View ngữ cảnh.
+  \item \textbf{\texttt{start\_on="human"}:} Đây là tham số cực kỳ quan trọng. Nó đảm bảo ngữ cảnh gửi vào mô hình luôn luôn bắt đầu bằng một tin nhắn từ phía người dùng (\texttt{HumanMessage}). Nếu phần cắt bớt vô tình cắt đúng vào tin nhắn của trợ lý (\texttt{AIMessage}) hoặc kết quả của công cụ (\texttt{ToolMessage}) ở đầu danh sách, hàm sẽ tự động dịch chuyển điểm cắt để bắt đầu ở tin nhắn người dùng tiếp theo, tránh làm mô hình bối rối về mặt cấu trúc hội thoại.
+  \item \textbf{\texttt{include\_system=True}:} Đảm bảo tin nhắn cấu hình hệ thống (\texttt{SystemMessage}) định nghĩa vai trò trợ lý sẽ luôn luôn được giữ lại ở đầu danh sách ngữ cảnh gửi đi, không bị ảnh hưởng bởi quá trình cắt bớt.
+\end{itemize}
+
+\section{Không cắt tin nhắn một cách mù quáng}
+
+Cắt danh sách tin nhắn bằng cách lấy lát cắt thô kiểu Python như \texttt{messages[-20:]} là một cách làm rất nguy hiểm. Nếu trong 20 tin nhắn cuối đó chứa một tin nhắn trợ lý yêu cầu gọi công cụ (\texttt{tool\_call}) nhưng tin nhắn trả về kết quả công cụ (\texttt{ToolMessage}) tương ứng lại nằm ở tin nhắn thứ 21 (đã bị cắt đi), API của các nhà cung cấp như OpenAI hay Anthropic sẽ lập tức từ chối xử lý và báo lỗi giao thức hội thoại không hợp lệ. Do đó, việc sử dụng các hàm tiện ích có hiểu biết về loại tin nhắn như \texttt{trim\_messages} là bắt buộc.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+ box/.style={draw=aiBlue,rounded corners,fill=aiSoftBlue,minimum width=3.5cm,minimum height=1cm,align=center},
+ arr/.style={-{Stealth[length=2mm]},thick,aiNavy}]
+ \node[box] (storage) {Checkpoint\\100 messages};
+ \node[box,right=1.3cm of storage] (trim) {\texttt{trim\_messages}\\theo token};
+ \node[box,right=1.3cm of trim] (model) {LLM context\\20 messages};
+ \draw[arr] (storage)--(trim); \draw[arr] (trim)--(model);
+\end{tikzpicture}
+\caption{Trim tạo view cho model nhưng có thể giữ storage đầy đủ.}
+\label{fig:trim-view}
+\figsource{Tác giả tự dựng.}
+\end{figure}
+
+\begin{aiwarning}[Phân biệt hai kiểu xóa tin nhắn]
+Cần phân biệt rõ:
+\begin{enumerate}
+  \item \textbf{Cắt bớt ở mức Input (Trim View):} Chỉ ẩn các tin nhắn cũ đi đối với mô hình trong lượt gọi hiện tại, dữ liệu trong cơ sở dữ liệu checkpoint vẫn được bảo toàn nguyên vẹn.
+  \item \textbf{Xóa vĩnh viễn ở mức State (State Deletion):} Trả về đối tượng \texttt{RemoveMessage(id=msg\_id)} từ node. LangGraph sẽ lập tức đánh dấu và xóa vĩnh viễn tin nhắn đó khỏi cơ sở dữ liệu lưu trữ ở lần ghi checkpoint tiếp theo. Hãy chỉ sử dụng cơ chế này khi hệ thống có chính sách bảo mật dữ liệu nghiêm ngặt hoặc khi người dùng yêu cầu xóa lịch sử.
+\end{enumerate}
+\end{aiwarning}
+
+\section{Mẫu phân bổ ngân sách ngữ cảnh hợp lý}
+
+Bảng dưới đây minh họa một phương án phân bổ ngân sách ngữ cảnh (token budget) thực tế cho một mô hình hỗ trợ ngữ cảnh đầu vào 32.000 token:
+
+\begin{table}[H]
+\centering
+\caption{Ví dụ phân bổ ngữ cảnh ngữ âm (Token Budget)}
+\begin{tabular}{p{6.4cm}r p{6cm}}
+\toprule
+\textbf{Thành phần ngữ cảnh} & \textbf{Ngân sách (Token)} & \textbf{Ghi chú} \\
+\midrule
+System instruction và chính sách (Policy) & 2.000 & Luôn luôn được giữ lại nguyên vẹn ở đầu. \\
+Long-term user profile (Truy xuất từ Store) & 1.000 & Chỉ nạp các thông tin ghi nhớ có liên quan. \\
+Running summary (Tóm tắt hội thoại cũ) & 3.000 & Phần tóm tắt cô đọng của các tin nhắn đã bị cắt. \\
+Recent messages (Các lượt chat gần đây nhất) & 10.000 & Giữ nguyên văn khoảng 5-10 cặp hội thoại gần nhất. \\
+RAG / Kết quả công cụ bổ trợ & 8.000 & Ngữ cảnh mở rộng khi truy xuất cơ sở dữ liệu. \\
+Output reserve (Ngăn sách dự phòng đầu ra) & 8.000 & Phần trống dành riêng cho mô hình sinh câu trả lời. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{aicheckpoint}[Lab 20 phút]
+Tạo ra một danh sách giả lập gồm 30 tin nhắn hội thoại xen kẽ, đưa một từ khóa bí mật (fact) vào tin nhắn thứ 3. Thực hiện chạy thử hàm \texttt{context\_for\_model} với ba cấu hình giới hạn token khác nhau. Ghi nhận số lượng tin nhắn thực tế còn lại trong View ngữ cảnh đầu ra và kiểm tra xem từ khóa bí mật đó có bị mất đi khi thu hẹp ngân sách token hay không. Viết báo cáo phân tích giải pháp khắc phục.
+\\nd học viên tự thực hành và ghi nhận.
+\end{aicheckpoint}

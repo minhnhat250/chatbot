@@ -1,0 +1,80 @@
+2026-08-01 14:24:16,400+0700 INFO  miktex-pdftex - this process (2304) started by miktex-makefmt in directory C:\Users\Windows\AppData\Local\Temp\mik19040 with command line: miktex-pdftex.exe --miktex-enable-installer --miktex-disable-maintenance --miktex-disable-diagnose --interaction=nonstopmode --initialize --halt-on-error --alias=pdflatex --job-name=pdflatex -tcx=cp227.tcx --enable-etex pdflatex.ini
+2026-08-01 14:24:16,400+0700 INFO  miktex-pdftex - running on Windows 10.0.22631
+2026-08-01 14:24:16,401+0700 INFO  miktex-pdftex - this is MiKTeX-PDFTEX 4.23.0 (1.40.28) (MiKTeX 25.12)
+2026-08-01 14:24:16,406+0700 INFO  miktex-pdftex - allowing known shell commands
+2026-08-01 14:24:28,689+0700 INFO  miktex-pdftex - this process (2304) finishes with exit code 0
+2026-08-01 14:25:08,779+0700 INFO  miktex-pdftex - this process (156) started by miktex-makefmt in directory C:\Users\Windows\AppData\Local\Temp\mik54450 with command line: miktex-pdftex.exe --miktex-enable-installer --miktex-disable-maintenance --miktex-disable-diagnose --interaction=nonstopmode --initialize --halt-on-error --alias=pdflatex --job-name=pdflatex -tcx=cp227.tcx --enable-etex pdflatex.ini
+2026-08-01 14:25:08,780+0700 INFO  miktex-pdftex - running on Windows 10.0.22631
+2026-08-01 14:25:08,781+0700 INFO  miktex-pdftex - this is MiKTeX-PDFTEX 4.23.0 (1.40.28) (MiKTeX 25.12)
+2026-08-01 14:25:08,787+0700 INFO  miktex-pdftex - allowing known shell commands
+2026-08-01 14:25:19,847+0700 INFO  miktex-pdftex - this process (156) finishes with exit code 0
+2026-08-01 14:29:55,951+0700 INFO  miktex-pdftex - this process (17388) started by miktex-makefmt in directory C:\Users\Windows\AppData\Local\Temp\mik92046 with command line: miktex-pdftex.exe --miktex-enable-installer --miktex-disable-maintenance --miktex-disable-diagnose --interaction=nonstopmode --initialize --halt-on-error --alias=pdflatex --job-name=pdflatex -tcx=cp227.tcx --enable-etex pdflatex.ini
+2026-08-01 14:29:55,951+0700 INFO  miktex-pdftex - running on Windows 10.0.22631
+2026-08-01 14:29:55,952+0700 INFO  miktex-pdftex - this is MiKTeX-PDFTEX 4.23.0 (1.40.28) (MiKTeX 25.12)
+2026-08-01 14:29:55,957+0700 INFO  miktex-pdftex - allowing known shell commands
+2026-08-01 14:30:07,410+0700 INFO  miktex-pdftex - this process (17388) finishes with exit code 0
+2026-08-01 14:31:02,811+0700 INFO  miktex-pdftex - this process (16588) started by miktex-makefmt in directory C:\Users\Windows\AppData\Local\Temp\mik41436 with command line: miktex-pdftex.exe --miktex-enable-installer --miktex-disable-maintenance --miktex-disable-diagnose --interaction=nonstopmode --initialize --halt-on-error --alias=pdflatex --job-name=pdflatex -tcx=cp227.tcx --enable-etex pdflatex.ini
+2026-08-01 14:31:02,811+0700 INFO  miktex-pdftex - running on Windows 10.0.22631
+2026-08-01 14:31:02,811+0700 INFO  miktex-pdftex - this is MiKTeX-PDFTEX 4.23.0 (1.40.28) (MiKTeX 25.12)
+2026-08-01 14:31:02,816+0700 INFO  miktex-pdftex - allowing known shell commands
+2026-08-01 14:31:13,674+0700 INFO  miktex-pdftex - this process (16588) finishes with exit code 0
+2026-08-01 14:32:36,753+0700 INFO  miktex-pdftex - this process (1208) started by miktex-makefmt in directory C:\Users\Windows\AppData\Local\Temp\mik48321 with command line: miktex-pdftex.exe --miktex-enable-installer --miktex-disable-maintenance --miktex-disable-diagnose --interaction=nonstopmode --initialize --halt-on-error --alias=pdflatex --job-name=pdflatex -tcx=cp227.tcx --enable-etex pdflatex.ini
+2026-08-01 14:32:36,753+0700 INFO  miktex-pdftex - running on Windows 10.0.22631
+2026-08-01 14:32:36,754+0700 INFO  miktex-pdftex - this is MiKTeX-PDFTEX 4.23.0 (1.40.28) (MiKTeX 25.12)
+2026-08-01 14:32:36,758+0700 INFO  miktex-pdftex - allowing known shell commands
+2026-08-01 14:32:49,539+0700 INFO  miktex-pdftex - this process (1208) finishes with exit code 0
+2026-08-01 14:34:23,084+0700 INFO  miktex-pdftex - this process (6596) started by miktex-makefmt in directory C:\Users\Windows\AppData\Local\Temp\mik57052 with command line: miktex-pdftex.exe --miktex-enable-installer --miktex-disable-maintenance --miktex-disable-diagnose --interaction=nonstopmode --initialize --halt-on-error --alias=pdflatex --job-name=pdflatex -tcx=cp227.tcx --enable-etex pdflatex.ini
+2026-08-01 14:34:23,084+0700 INFO  miktex-pdftex - running on Windows 10.0.22631
+2026-08-01 14:34:23,086+0700 INFO  miktex-pdftex - this is MiKTeX-PDFTEX 4.23.0 (1.40.28) (MiKTeX 25.12)
+2026-08-01 14:34:23,092+0700 INFO  miktex-pdftex - allowing known shell commands
+2026-08-01 14:34:34,735+0700 INFO  miktex-pdftex - this process (6596) finishes with exit code 0
+2026-08-01 14:45:44,155+0700 INFO  miktex-pdftex - this process (6528) started by miktex-makefmt in directory C:\Users\Windows\AppData\Local\Temp\mik23478 with command line: miktex-pdftex.exe --miktex-enable-installer --miktex-disable-maintenance --miktex-disable-diagnose --interaction=nonstopmode --initialize --halt-on-error --alias=pdflatex --job-name=pdflatex -tcx=cp227.tcx --enable-etex pdflatex.ini
+2026-08-01 14:45:44,156+0700 INFO  miktex-pdftex - running on Windows 10.0.22631
+2026-08-01 14:45:44,160+0700 INFO  miktex-pdftex - this is MiKTeX-PDFTEX 4.23.0 (1.40.28) (MiKTeX 25.12)
+2026-08-01 14:45:44,171+0700 INFO  miktex-pdftex - allowing known shell commands
+2026-08-01 14:46:08,146+0700 INFO  miktex-pdftex - this process (6528) finishes with exit code 0
+2026-08-01 14:52:10,081+0700 INFO  miktex-pdftex - this process (17676) started by miktex-makefmt in directory C:\Users\Windows\AppData\Local\Temp\mik19850 with command line: miktex-pdftex.exe --miktex-enable-installer --miktex-disable-maintenance --miktex-disable-diagnose --interaction=nonstopmode --initialize --halt-on-error --alias=pdflatex --job-name=pdflatex -tcx=cp227.tcx --enable-etex pdflatex.ini
+2026-08-01 14:52:10,081+0700 INFO  miktex-pdftex - running on Windows 10.0.22631
+2026-08-01 14:52:10,082+0700 INFO  miktex-pdftex - this is MiKTeX-PDFTEX 4.23.0 (1.40.28) (MiKTeX 25.12)
+2026-08-01 14:52:10,086+0700 INFO  miktex-pdftex - allowing known shell commands
+2026-08-01 14:52:23,619+0700 INFO  miktex-pdftex - this process (17676) finishes with exit code 0
+2026-08-01 14:56:49,869+0700 INFO  miktex-pdftex - this process (18200) started by miktex-makefmt in directory C:\Users\Windows\AppData\Local\Temp\mik10687 with command line: miktex-pdftex.exe --miktex-enable-installer --miktex-disable-maintenance --miktex-disable-diagnose --interaction=nonstopmode --initialize --halt-on-error --alias=pdflatex --job-name=pdflatex -tcx=cp227.tcx --enable-etex pdflatex.ini
+2026-08-01 14:56:49,869+0700 INFO  miktex-pdftex - running on Windows 10.0.22631
+2026-08-01 14:56:49,869+0700 INFO  miktex-pdftex - this is MiKTeX-PDFTEX 4.23.0 (1.40.28) (MiKTeX 25.12)
+2026-08-01 14:56:49,874+0700 INFO  miktex-pdftex - allowing known shell commands
+2026-08-01 14:57:06,313+0700 INFO  miktex-pdftex - this process (18200) finishes with exit code 0
+2026-08-01 14:59:19,814+0700 INFO  miktex-pdftex - this process (11532) started by miktex-makefmt in directory C:\Users\Windows\AppData\Local\Temp\mik62708 with command line: miktex-pdftex.exe --miktex-enable-installer --miktex-disable-maintenance --miktex-disable-diagnose --interaction=nonstopmode --initialize --halt-on-error --alias=pdflatex --job-name=pdflatex -tcx=cp227.tcx --enable-etex pdflatex.ini
+2026-08-01 14:59:19,814+0700 INFO  miktex-pdftex - running on Windows 10.0.22631
+2026-08-01 14:59:19,815+0700 INFO  miktex-pdftex - this is MiKTeX-PDFTEX 4.23.0 (1.40.28) (MiKTeX 25.12)
+2026-08-01 14:59:19,821+0700 INFO  miktex-pdftex - allowing known shell commands
+2026-08-01 14:59:34,019+0700 INFO  miktex-pdftex - this process (11532) finishes with exit code 0
+2026-08-02 14:15:28,410+0700 INFO  miktex-pdftex - this process (17468) started by miktex-makefmt in directory C:\Users\Windows\AppData\Local\Temp\mik39668 with command line: miktex-pdftex.exe --miktex-enable-installer --miktex-disable-maintenance --miktex-disable-diagnose --interaction=nonstopmode --initialize --halt-on-error --alias=pdflatex --job-name=pdflatex -tcx=cp227.tcx --enable-etex pdflatex.ini
+2026-08-02 14:15:28,411+0700 INFO  miktex-pdftex - running on Windows 10.0.22631
+2026-08-02 14:15:28,412+0700 INFO  miktex-pdftex - this is MiKTeX-PDFTEX 4.23.0 (1.40.28) (MiKTeX 25.12)
+2026-08-02 14:15:28,416+0700 INFO  miktex-pdftex - allowing known shell commands
+2026-08-02 14:15:41,362+0700 INFO  miktex-pdftex - this process (17468) finishes with exit code 0
+2026-08-02 14:18:46,658+0700 INFO  miktex-pdftex - this process (17604) started by miktex-makefmt in directory C:\Users\Windows\AppData\Local\Temp\mik35426 with command line: miktex-pdftex.exe --miktex-enable-installer --miktex-disable-maintenance --miktex-disable-diagnose --interaction=nonstopmode --initialize --halt-on-error --alias=pdflatex --job-name=pdflatex -tcx=cp227.tcx --enable-etex pdflatex.ini
+2026-08-02 14:18:46,658+0700 INFO  miktex-pdftex - running on Windows 10.0.22631
+2026-08-02 14:18:46,658+0700 INFO  miktex-pdftex - this is MiKTeX-PDFTEX 4.23.0 (1.40.28) (MiKTeX 25.12)
+2026-08-02 14:18:46,662+0700 INFO  miktex-pdftex - allowing known shell commands
+2026-08-02 14:18:56,672+0700 INFO  miktex-pdftex - this process (17604) finishes with exit code 0
+2026-08-02 14:19:47,881+0700 INFO  miktex-pdftex - this process (18444) started by miktex-makefmt in directory C:\Users\Windows\AppData\Local\Temp\mik41398 with command line: miktex-pdftex.exe --miktex-enable-installer --miktex-disable-maintenance --miktex-disable-diagnose --interaction=nonstopmode --initialize --halt-on-error --alias=pdflatex --job-name=pdflatex -tcx=cp227.tcx --enable-etex pdflatex.ini
+2026-08-02 14:19:47,881+0700 INFO  miktex-pdftex - running on Windows 10.0.22631
+2026-08-02 14:19:47,882+0700 INFO  miktex-pdftex - this is MiKTeX-PDFTEX 4.23.0 (1.40.28) (MiKTeX 25.12)
+2026-08-02 14:19:47,886+0700 INFO  miktex-pdftex - allowing known shell commands
+2026-08-02 14:19:57,926+0700 INFO  miktex-pdftex - this process (18444) finishes with exit code 0
+2026-08-02 14:20:49,596+0700 INFO  miktex-pdftex - this process (19084) started by miktex-makefmt in directory C:\Users\Windows\AppData\Local\Temp\mik62679 with command line: miktex-pdftex.exe --miktex-enable-installer --miktex-disable-maintenance --miktex-disable-diagnose --interaction=nonstopmode --initialize --halt-on-error --alias=pdflatex --job-name=pdflatex -tcx=cp227.tcx --enable-etex pdflatex.ini
+2026-08-02 14:20:49,596+0700 INFO  miktex-pdftex - running on Windows 10.0.22631
+2026-08-02 14:20:49,596+0700 INFO  miktex-pdftex - this is MiKTeX-PDFTEX 4.23.0 (1.40.28) (MiKTeX 25.12)
+2026-08-02 14:20:49,601+0700 INFO  miktex-pdftex - allowing known shell commands
+2026-08-02 14:21:00,621+0700 INFO  miktex-pdftex - this process (19084) finishes with exit code 0
+2026-08-02 14:21:57,291+0700 INFO  miktex-pdftex - this process (3416) started by miktex-makefmt in directory C:\Users\Windows\AppData\Local\Temp\mik39031 with command line: miktex-pdftex.exe --miktex-enable-installer --miktex-disable-maintenance --miktex-disable-diagnose --interaction=nonstopmode --initialize --halt-on-error --alias=pdflatex --job-name=pdflatex -tcx=cp227.tcx --enable-etex pdflatex.ini
+2026-08-02 14:21:57,291+0700 INFO  miktex-pdftex - running on Windows 10.0.22631
+2026-08-02 14:21:57,292+0700 INFO  miktex-pdftex - this is MiKTeX-PDFTEX 4.23.0 (1.40.28) (MiKTeX 25.12)
+2026-08-02 14:21:57,295+0700 INFO  miktex-pdftex - allowing known shell commands
+2026-08-02 14:22:09,774+0700 INFO  miktex-pdftex - this process (3416) finishes with exit code 0
+2026-08-02 14:23:08,977+0700 INFO  miktex-pdftex - this process (19248) started by miktex-makefmt in directory C:\Users\Windows\AppData\Local\Temp\mik94148 with command line: miktex-pdftex.exe --miktex-enable-installer --miktex-disable-maintenance --miktex-disable-diagnose --interaction=nonstopmode --initialize --halt-on-error --alias=pdflatex --job-name=pdflatex -tcx=cp227.tcx --enable-etex pdflatex.ini
+2026-08-02 14:23:08,977+0700 INFO  miktex-pdftex - running on Windows 10.0.22631
+2026-08-02 14:23:08,978+0700 INFO  miktex-pdftex - this is MiKTeX-PDFTEX 4.23.0 (1.40.28) (MiKTeX 25.12)
+2026-08-02 14:23:08,982+0700 INFO  miktex-pdftex - allowing known shell commands
+2026-08-02 14:23:21,122+0700 INFO  miktex-pdftex - this process (19248) finishes with exit code 0

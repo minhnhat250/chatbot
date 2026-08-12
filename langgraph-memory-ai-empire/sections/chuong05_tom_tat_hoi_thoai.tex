@@ -1,0 +1,113 @@
+\chapter{RUNNING SUMMARY (TÓM TẮT TĂNG DẦN)}
+\label{chap:summarization}
+
+Trong khi kỹ thuật cắt bớt tin nhắn (trimming) hoạt động rất nhanh và tiết kiệm tài nguyên, nhược điểm lớn nhất của nó là làm biến mất vĩnh viễn các dữ kiện (facts) quan trọng xuất hiện ở phần đầu cuộc trò chuyện. Để khắc phục triệt để điều này, chúng ta sử dụng kỹ thuật Running Summary (tóm tắt tăng dần hay lũy tiến). 
+
+Phương pháp này nén toàn bộ các tin nhắn cũ đã bị cắt đi thành một đoạn văn bản tóm tắt súc tích lưu trong State, sau đó gửi kèm đoạn tóm tắt này cùng với các tin nhắn gần nhất đến mô hình LLM ở các lượt gọi sau. Cả LangChain và LangGraph đều hỗ trợ xây dựng cơ chế này một cách linh hoạt thông qua các node tự định nghĩa \parencite{langchainShortTermMemory,langgraphAddMemory}.
+
+\section{Mở rộng State Schema để chứa Summary}
+
+Để tích hợp bộ nhớ tóm tắt, bước đầu tiên là chúng ta cần kế thừa cấu trúc \texttt{MessagesState} mặc định và khai báo thêm trường \texttt{summary}:
+
+\begin{lstlisting}[language=Python,caption={State có thêm summary}]
+from langgraph.graph import MessagesState
+
+class ChatState(MessagesState):
+    summary: str
+\end{lstlisting}
+
+\subsection{Bản chất của trường dữ liệu \texttt{summary}}
+Cần lưu ý rằng biến \texttt{summary} định nghĩa ở trên vẫn là một phần của bộ nhớ ngắn hạn (short-term memory) vì nó được gắn liền với trạng thái của một luồng trò chuyện (\texttt{thread\_id}) cụ thể. Nó được lưu trữ và cập nhật tự động bởi checkpointer. Nó hoàn toàn không tự chuyển hóa thành hồ sơ người dùng dài hạn (long-term profile) nếu chúng ta không có cơ chế lưu trữ riêng biệt.
+
+\section{Chu trình hoạt động của Node tóm tắt lũy tiến}
+
+Chu trình xử lý tóm tắt lịch sử hội thoại chỉ nên được kích hoạt khi độ dài của danh sách tin nhắn hiện tại vượt quá một ngưỡng giới hạn nhất định (ví dụ: vượt quá 10 tin nhắn hoặc vượt quá 2.000 token):
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+ flowbox/.style={draw=aiBlue,rounded corners,fill=aiSoftBlue,minimum width=3.3cm,minimum height=1cm,align=center},
+ decision/.style={draw=aiGold,diamond,fill=aiSoftGold,aspect=2,align=center},
+ arr/.style={-{Stealth[length=2mm]},thick,aiNavy}]
+ \node[flowbox] (input) {Message mới};
+ \node[decision,right=1.4cm of input] (limit) {Vượt ngưỡng?};
+ \node[flowbox,right=1.5cm of limit] (summary) {Mở rộng summary\\và compact};
+ \node[flowbox,below=1.4cm of limit] (model) {Gọi model với\\summary + recent};
+ \draw[arr] (input)--(limit);
+ \draw[arr] (limit)--node[above,font=\scriptsize]{có}(summary);
+ \draw[arr] (limit)--node[right,font=\scriptsize]{không}(model);
+ \draw[arr] (summary)|-(model);
+\end{tikzpicture}
+\caption{Running summary chỉ chạy khi history vượt ngưỡng.}
+\label{fig:summary-loop}
+\figsource{Tác giả tự dựng.}
+\end{figure}
+
+Quy trình thực thi của Node tóm tắt (Summarizer node) diễn ra như sau:
+\begin{enumerate}
+  \item Ở lượt chạy đầu tiên vượt ngưỡng: Đọc toàn bộ danh sách tin nhắn hiện tại, yêu cầu LLM sinh ra một đoạn tóm tắt tổng hợp lần thứ nhất, sau đó thay thế các tin nhắn cũ bằng các đối tượng \texttt{RemoveMessage} để giải phóng ngữ cảnh.
+  \item Ở các lượt chạy tiếp theo: Summarizer node nhận vào đoạn \texttt{summary} cũ đã lưu trong State kèm theo các tin nhắn mới phát sinh (chưa được nén). Nó yêu cầu LLM viết tiếp một bản tóm tắt mới tích hợp cả hai nguồn thông tin trên, tạo ra một bản tóm tắt cập nhật (lũy tiến) duy nhất.
+\end{enumerate}
+
+\section{Tiêu chí của một bản tóm tắt chất lượng cao}
+
+Khi viết chỉ dẫn hệ thống (prompt) cho Summarizer node, chúng ta cần hướng dẫn mô hình tập trung giữ lại các nhóm thông tin cốt lõi sau:
+\begin{itemize}
+  \item Mục tiêu hiện tại và các ràng buộc nghiệp vụ mà người dùng đã đề cập.
+  \item Các quyết định quan trọng đã được hai bên thống nhất và lý do đi kèm.
+  \item Các giải pháp kỹ thuật đã thử nghiệm, kết quả thu được hoặc mã lỗi nghiêm trọng phát sinh.
+  \item Tên của các thực thể (entities), mã định danh (IDs) nghiệp vụ cần thiết cho các bước xử lý sau.
+  \item Các câu hỏi còn bỏ ngỏ hoặc các hành động tiếp theo (action items) chưa được giải quyết.
+\end{itemize}
+
+\subsection{Thông tin cần lược bỏ}
+Cần yêu cầu mô hình chủ động loại bỏ các câu chào hỏi xã giao, câu từ lặp lại vô nghĩa, các giải thích dài dòng đã hết giá trị hiệu lực. Do tóm tắt là quá trình suy diễn (inference), mô hình hoàn toàn có khả năng viết sai hoặc bịa đặt thông tin (hallucination). Với các quyết định nghiệp vụ hoặc dữ liệu đặc thù nhạy cảm, nên thiết kế cấu trúc lưu trữ chuyên biệt (structured memory) thay vì chỉ lưu trữ dưới dạng một chuỗi văn bản thuần túy.
+
+\section{Mô phỏng cơ chế Compact tin nhắn trong mã nguồn}
+
+Để hiểu rõ hơn về mặt cấu trúc dữ liệu, chúng ta hãy xem xét hàm mô phỏng thu gọn tin nhắn bằng rule trong \texttt{context\_management.py}:
+
+\begingroup
+\lstinputlisting[inputencoding=utf8/latin1,language=Python,firstline=30,caption={Mô phỏng compact không cần LLM}]{code/context_management.py}
+\endgroup
+
+\subsection{Phân tích chi tiết mã nguồn}
+\begin{itemize}
+  \item \textbf{Định nghĩa lớp \texttt{CompactedConversation}:} Một dataclass chứa hai trường: \texttt{summary} (chuỗi văn bản tóm tắt) và \texttt{recent\_messages} (danh sách các tin nhắn gần nhất được giữ lại nguyên văn).
+  \item \textbf{Hàm \texttt{compact\_deterministically}:} Hàm này mô phỏng quá trình tóm tắt:
+  \begin{itemize}
+    \item Nếu tổng số tin nhắn nhỏ hơn hoặc bằng tham số \texttt{keep\_recent} (mặc định là 4), hàm trả về danh sách tin nhắn hiện tại mà không tóm tắt.
+    \item Nếu vượt ngưỡng, hàm phân tách danh sách tin nhắn thành hai phần: \texttt{old\_messages} (phần tin nhắn cũ cần tóm tắt) và phần tin nhắn gần đây. Nó duyệt qua \texttt{old\_messages}, lọc ra các câu nói của người dùng và nối lại thành một chuỗi văn bản đại diện cho bộ nhớ tóm tắt.
+  \end{itemize}
+\end{itemize}
+
+Trong môi trường thực tế, đoạn logic mô phỏng trên được thay thế hoàn toàn bằng việc gọi một mô hình LLM nhỏ hơn (để tiết kiệm chi phí) kết hợp với cấu trúc đầu ra chuẩn hóa (Structured Output) dạng JSON để dễ dàng phân tích và kiểm soát chất lượng:
+
+\begin{lstlisting}[language=Python,caption={Schema summary dễ đánh giá}]
+summary = {
+    "goal": "Integrate LangGraph into the LLM Gateway",
+    "decisions": ["Use one thread_id per conversation"],
+    "facts": ["User name is Nhat"],
+    "open_questions": ["Choose SQLite or PostgreSQL"]
+}
+\end{lstlisting}
+
+\section{Lựa chọn thời điểm Trigger chạy tóm tắt}
+
+Có ba phương án chính để kích hoạt tiến trình tóm tắt hội thoại:
+\begin{itemize}
+  \item \textbf{Theo số lượng tin nhắn (Message Count):} Dễ lập trình nhất nhưng không phản ánh chính xác độ dài thực tế (ví dụ: 5 tin nhắn cực dài có thể chứa lượng token nhiều hơn 20 tin nhắn cực ngắn).
+  \item \textbf{Theo số lượng token thực tế (Token Threshold):} Sát với giới hạn của mô hình nhất, giúp tối ưu hóa không gian ngữ cảnh hiệu quả nhất.
+  \item \textbf{Chạy ngầm ở luồng nền (Asynchronous Background Job):} Giúp triệt tiêu hoàn toàn độ trễ của tiến trình tóm tắt trên đường chạy chính (hot path) của người dùng, nhưng đòi hỏi thiết kế hệ thống phức tạp để tránh xung đột ghi dữ liệu (race conditions).
+\end{itemize}
+
+Đối với các dự án thử nghiệm (prototype), việc kích hoạt tóm tắt theo token ngay trước bước gọi mô hình chính là phương án tối ưu nhất về mặt vận hành và độ phức tạp.
+
+\begin{aicheckpoint}[Lab 25 phút]
+Thiết kế một kịch bản hội thoại mẫu gồm 12 tin nhắn có chứa thông tin khai báo tên, mục tiêu dự án, một quyết định nghiệp vụ bị thay đổi ở giữa cuộc trò chuyện và một câu hỏi chưa trả lời. Hãy viết một cấu trúc prompt yêu cầu LLM tóm tắt thông tin theo đúng định dạng JSON 4 trường ở trên. Viết mã kiểm thử tự động xác thực:
+\begin{enumerate}
+  \item Bản tóm tắt có giữ lại đúng quyết định mới nhất hay không?
+  \item Bản tóm tắt có loại bỏ quyết định cũ đã hết hiệu lực hay không?
+  \item Bản tóm tắt có sinh ra các dữ kiện ảo (hallucination) hay không?
+\end{enumerate}
+\end{aicheckpoint}

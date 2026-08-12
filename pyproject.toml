@@ -1,7 +1,7 @@
 [project]
-name =  "LLM-gateway"
-version = "1.1.0"
-description = "Kiến trúc chatbot"
+name = "LLM-gateway"
+version = "1.2.0"
+description = "Cổng API và giao diện chat cho nhiều mô hình ngôn ngữ"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
@@ -12,15 +12,19 @@ authors = [
 dependencies = [
     "cohere",
     "fastapi",
-    "google-generativeai",
+    "google-genai>=2.12.1",
     "openai",
     "python-dotenv",
-    "uvicorn",
     "qdrant-client",
-    "google-genai>=2.12.1",
+    "streamlit>=1.40",
+    "uvicorn",
+]
+
+[project.optional-dependencies]
+dev = [
+    "httpx",
+    "pytest",
 ]
 
 [tool.setuptools.packages.find]
 include = ["models*", "Tools*"]
-
-

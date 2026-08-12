@@ -1,0 +1,61 @@
+\chapter{Bài tập tổng hợp và rubric}
+\label{app:exercises-rubric}
+
+\section{Bài tập cấp 1: mô hình tinh thần}
+
+\begin{enumerate}
+  \item Vẽ ba lớp UI history, persistent history và model context cho một request.
+  \item Viết conversation manager bằng list/dictionary cho ba thread.
+  \item Giải thích bằng 100 từ vì sao model không tự nhớ request trước.
+\end{enumerate}
+
+\section{Bài tập cấp 2: LangGraph memory}
+
+\begin{enumerate}[resume]
+  \item Mở rộng state có \texttt{summary} và \texttt{selected\_provider}.
+  \item Viết test 20 lượt chat xen kẽ giữa hai thread.
+  \item Trim theo token và đo số message model nhận.
+  \item Thiết kế namespace profile cho tổ chức, user và application.
+\end{enumerate}
+
+\section{Bài tập cấp 3: production}
+
+\begin{enumerate}[resume]
+  \item Thay InMemorySaver bằng SQLite và chứng minh restart.
+  \item Viết bảng conversation ownership và endpoint 403.
+  \item Thêm lệnh xem/quên long-term memory.
+  \item Viết kế hoạch migration lên PostgreSQL nhiều worker.
+\end{enumerate}
+
+\section{Rubric dự án cuối khóa}
+
+\begin{table}[H]
+\centering
+\caption{Rubric 100 điểm cho chatbot có memory}
+\begin{tabular}{p{6.1cm}r p{6.4cm}}
+\toprule
+\textbf{Tiêu chí} & \textbf{Điểm} & \textbf{Minh chứng} \\
+\midrule
+Mô hình state/thread/user đúng & 15 & Sơ đồ, schema và giải thích nhất quán. \\
+Short-term isolation & 15 & Test nhiều thread, không duplicate message. \\
+Context management & 15 & Token budget, trim/summary và test dài. \\
+Long-term memory & 15 & Opt-in save/forget, namespace đúng. \\
+Security và privacy & 15 & Ownership, secret policy, cross-user test. \\
+Persistence và vận hành & 10 & Restart, lifecycle, error handling. \\
+Kiểm thử và quan sát & 10 & Unit/API/integration test, metric có nghĩa. \\
+Tài liệu và demo & 5 & README, sơ đồ, demo tái lập được. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Thang phản hồi bốn mức}
+
+\begin{itemize}
+  \item \textbf{1 -- Chưa đạt:} chỉ demo thủ công, không tách đúng thread/user.
+  \item \textbf{2 -- Đang phát triển:} flow chính chạy nhưng thiếu failure test hoặc persistence.
+  \item \textbf{3 -- Đạt:} các invariant chính có test, context và ownership rõ.
+  \item \textbf{4 -- Vững:} có đánh giá dài hạn, quan sát, migration và trade-off được chứng minh.
+\end{itemize}
+
+Mẫu phản hồi: một điểm mạnh quan sát được; một khoảng trống gắn rubric; một bước sửa cụ thể; một
+test nhỏ phải hoàn thành trước buổi sau.

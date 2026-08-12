@@ -1,0 +1,88 @@
+% !TEX program = pdflatex
+\documentclass[12pt,a4paper,oneside]{report}
+\usepackage[T5]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[vietnamese]{babel}
+\usepackage{amsmath,amssymb,mathtools,bm}
+\usepackage{graphicx}
+\graphicspath{{figures/}}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,calc,positioning,shapes.geometric,fit,backgrounds,matrix}
+\usepackage{array,booktabs,longtable,multirow,float,caption,needspace}
+\usepackage{enumitem,listings,xcolor}
+\usepackage{listingsutf8}
+\usepackage[most]{tcolorbox}
+\usepackage{microtype}
+\usepackage[autopunct=false]{csquotes}
+\DeclareQuoteAlias{english}{vietnamese}
+\usepackage[backend=biber,style=authoryear-comp,sorting=nyt,maxcitenames=2,maxbibnames=99]{biblatex}
+\addbibresource{references.bib}
+\usepackage{geometry}
+\geometry{top=3.05cm,bottom=3.65cm,left=2.55cm,right=2.55cm}
+\usepackage[colorlinks=true,linkcolor=aiBlue,urlcolor=aiBlue,citecolor=aiBlue]{hyperref}
+\usepackage[nameinlink,noabbrev]{cleveref}
+\crefname{chapter}{chương}{các chương}
+\Crefname{chapter}{Chương}{Các chương}
+\crefname{section}{mục}{các mục}
+\Crefname{section}{Mục}{Các mục}
+\crefname{figure}{hình}{các hình}
+\Crefname{figure}{Hình}{Các hình}
+\crefname{table}{bảng}{các bảng}
+\Crefname{table}{Bảng}{Các bảng}
+\crefname{listing}{đoạn mã}{các đoạn mã}
+\Crefname{listing}{Đoạn mã}{Các đoạn mã}
+\def\crefpairconjunction{ và }
+\def\crefmiddleconjunction{, }
+\def\creflastconjunction{ và }
+\input{ai_empire_style}
+\renewcommand{\AIReportTitle}{Bộ nhớ hội thoại với LangGraph}
+\renewcommand{\AIReportSubtitle}{Từ message và thread đến context dài, Store và FastAPI}
+\renewcommand{\AIReportDescription}{Giáo trình thực hành từ nền tảng đến chatbot nhiều cuộc hội thoại}
+\renewcommand{\AIReportCourse}{AI EMPIRE ACADEMY -- GIÁO TRÌNH CHUYÊN ĐỀ}
+\renewcommand{\AIReportAuthor}{Mr. Tran Minh Nhat}
+\renewcommand{\AIReportPhone}{0976059814}
+\renewcommand{\AIReportWebsite}{aiempireacademy.com.vn}
+\renewcommand{\AIReportHeader}{AI EMPIRE -- LANGGRAPH MEMORY}
+\hypersetup{
+  pdftitle={Bộ nhớ hội thoại với LangGraph},
+  pdfauthor={Mr. Tran Minh Nhat -- AI Empire Academy},
+  pdfsubject={Short-term memory, context engineering, long-term memory và tích hợp FastAPI}
+}
+\begin{document}
+\hypersetup{pageanchor=false}
+\AITitlePage
+\hypersetup{pageanchor=true}
+\pagenumbering{roman}
+\setcounter{page}{2}
+\tableofcontents
+\clearpage
+\listoffigures
+\clearpage
+\listoftables
+\clearpage
+\input{sections/loi_mo_dau}
+\input{sections/huong_dan_hoc}
+\clearpage
+\pagenumbering{arabic}
+\input{sections/chuong01_model_khong_tu_nho}
+\input{sections/chuong02_nen_tang_langgraph}
+\input{sections/chuong03_short_term_memory}
+\input{sections/chuong04_quan_ly_context_dai}
+\input{sections/chuong05_tom_tat_hoi_thoai}
+\input{sections/chuong06_long_term_memory}
+\input{sections/chuong07_luu_tru_production}
+\input{sections/chuong08_tich_hop_llm_gateway}
+\input{sections/chuong09_kiem_thu_va_quan_sat}
+\input{sections/chuong10_du_an_cuoi_khoa}
+\input{sections/ket_luan}
+\appendix
+\input{sections/phu_luc_cai_dat}
+\input{sections/phu_luc_bai_tap_rubric}
+\input{sections/phu_luc_thuat_ngu}
+\clearpage
+\begingroup
+\sloppy
+\setlength{\emergencystretch}{3em}
+\printbibliography[heading=bibintoc,title={Tài liệu tham khảo}]
+\endgroup
+\end{document}
