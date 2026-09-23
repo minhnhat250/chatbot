@@ -1,19 +1,58 @@
 Metadata-Version: 2.4
 Name: LLM-gateway
-Version: 1.1.0
-Summary: Kiến trúc chatbot
+Version: 1.2.0
+Summary: Cổng API và giao diện chat cho nhiều mô hình ngôn ngữ
 Author: Minh Nhat
 License-Expression: MIT
 Requires-Python: >=3.11
 Description-Content-Type: text/markdown
 Requires-Dist: cohere
 Requires-Dist: fastapi
-Requires-Dist: google-generativeai
+Requires-Dist: google-genai>=2.12.1
+Requires-Dist: langchain<2,>=1.0
+Requires-Dist: langgraph<2,>=1.0
 Requires-Dist: openai
 Requires-Dist: python-dotenv
-Requires-Dist: uvicorn
 Requires-Dist: qdrant-client
+Requires-Dist: streamlit>=1.40
+Requires-Dist: uvicorn
+Requires-Dist: supabase
+Requires-Dist: pydantic-settings
+Provides-Extra: dev
+Requires-Dist: httpx; extra == "dev"
+Requires-Dist: pytest; extra == "dev"
 
-# LLM-gateway
+# LLM Gateway
 
-Kiến trúc chatbot
+FastAPI backend và giao diện chat Streamlit hỗ trợ DeepSeek, Google Gemini.
+
+## Cài đặt
+
+```powershell
+uv sync
+Copy-Item .env.example .env
+```
+
+Điền API key của ít nhất một provider vào `.env`.
+
+## Chạy ứng dụng
+
+Mở terminal thứ nhất để chạy API:
+
+```powershell
+uv run uvicorn app:app --reload
+```
+
+Mở terminal thứ hai để chạy giao diện:
+
+```powershell
+uv run streamlit run streamlit_app.py
+```
+
+Truy cập `http://localhost:8501`. Model được chọn trong thanh bên; UI chỉ hiển thị
+những provider đã có API key. Tài liệu API nằm tại `http://127.0.0.1:8000/docs`.
+
+## API
+
+- `GET /models`: danh sách provider, tên model cấu hình và trạng thái API key.
+- `POST /ask_ai`: gửi `{ "prompt": "...", "model": "deepseek|gemini" }`.

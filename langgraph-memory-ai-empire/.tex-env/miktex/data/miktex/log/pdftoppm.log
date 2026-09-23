@@ -1,3 +1,0 @@
-2026-08-01 15:04:08,592+0700 INFO  pdftoppm - this process (19284) started by powershell in directory D:\MN with command line: D:\MiKTeX\miktex\bin\x64\pdftoppm.exe -f 1 -l 2 -png -r 120 D:\MN\langgraph-memory-ai-empire\build\main.pdf D:\MN\langgraph-qa\page
-2026-08-01 15:04:08,592+0700 INFO  pdftoppm - running on Windows 10.0.22631
-2026-08-01 15:04:09,304+0700 INFO  pdftoppm - this process (19284) finishes with exit code 0

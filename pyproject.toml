@@ -13,13 +13,17 @@ dependencies = [
     "cohere",
     "fastapi",
     "google-genai>=2.12.1",
+    "langchain>=1.0,<2",
+    "langgraph>=1.0,<2",
     "openai",
     "python-dotenv",
     "qdrant-client",
     "streamlit>=1.40",
     "uvicorn",
-]
-
+    "supabase",
+    "pydantic-settings"]
+    
+    
 [project.optional-dependencies]
 dev = [
     "httpx",

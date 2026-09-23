@@ -5,5 +5,4 @@ LLM_gateway.egg-info/SOURCES.txt
 LLM_gateway.egg-info/dependency_links.txt
 LLM_gateway.egg-info/requires.txt
 LLM_gateway.egg-info/top_level.txt
-models/deepseek.py
-models/gemini.py
+tests/test_app.py
