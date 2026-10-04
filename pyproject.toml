@@ -21,7 +21,9 @@ dependencies = [
     "streamlit>=1.40",
     "uvicorn",
     "supabase",
-    "pydantic-settings"]
+    "pydantic-settings",
+    "gradio>=6.29.1",
+]
     
     
 [project.optional-dependencies]

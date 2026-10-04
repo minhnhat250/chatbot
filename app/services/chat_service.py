@@ -9,7 +9,7 @@ File này đóng vai trò là 'trung tâm điều phối' (Service Layer):
 """
 
 import logging
-from typing import Optional, Dict
+from typing import Optional, Dict #key :vaule
 
 from app.getways.base import BaseGateway
 from app.getways.gemini_getway import GeminiGateway
@@ -24,7 +24,7 @@ class ChatService:
     Lớp quản lý logic chat tổng thể của hệ thống.
     """
 
-    def __init__(self, gateways: Optional[Dict[str, BaseGateway]] = None):
+    def __init__(self, gateways: Optional[Dict[str, BaseGateway]] = None): #gemini : GeminiGateway, deepseek : DeepSeekGateway
         """
         Khởi tạo ChatService.
         - Có thể truyền sẵn danh sách `gateways` (rất hữu ích khi viết test mock).
@@ -39,7 +39,7 @@ class ChatService:
         """
         # Nếu đã có trong danh sách thì dùng lại
         if provider_key in self._gateways:
-            return self._gateways[provider_key]
+            return self._gateways[provider_key] #gemini or deepseek
 
         # Nếu chưa có thì khởi tạo mới dựa theo tên provider
         if provider_key == "gemini":
@@ -85,7 +85,6 @@ class ChatService:
         # Bước 3: Gửi prompt đến AI
         logger.info("Đang gửi prompt đến provider '%s'...", provider)
         answer = await gateway.generate(request.prompt)
-
         # Bước 4: Lấy tên model cụ thể từ gateway (nếu có)
         model_name = getattr(gateway, "model_name", provider)
 

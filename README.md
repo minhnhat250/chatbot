@@ -1,6 +1,6 @@
 # LLM Gateway
 
-FastAPI backend và giao diện chat Streamlit hỗ trợ DeepSeek, Google Gemini.
+FastAPI backend và giao diện chat Streamlit/Gradio hỗ trợ DeepSeek, Google Gemini.
 
 ## Cài đặt
 
@@ -16,7 +16,7 @@ Copy-Item .env.example .env
 Mở terminal thứ nhất để chạy API:
 
 ```powershell
-uv run uvicorn app:app --reload
+uv run uvicorn app.main:app --reload
 ```
 
 Mở terminal thứ hai để chạy giao diện:
@@ -25,8 +25,15 @@ Mở terminal thứ hai để chạy giao diện:
 uv run streamlit run streamlit_app.py
 ```
 
-Truy cập `http://localhost:8501`. Model được chọn trong thanh bên; UI chỉ hiển thị
-những provider đã có API key. Tài liệu API nằm tại `http://127.0.0.1:8000/docs`.
+Hoặc chạy giao diện Gradio trong terminal riêng:
+
+```powershell
+uv run python gradio_app.py
+```
+
+Streamlit mở tại `http://localhost:8501`, Gradio tại `http://127.0.0.1:7860`.
+Cả hai giao diện đều gọi FastAPI tại `http://127.0.0.1:8000`; có thể đổi địa chỉ
+bằng biến môi trường `LLM_GATEWAY_URL`. Tài liệu API nằm tại `http://127.0.0.1:8000/docs`.
 
 ## API
 
